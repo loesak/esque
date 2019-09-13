@@ -26,11 +26,10 @@ public class ElasticsearchDocumentLock implements Lock {
     private final ReentrantLock delegate = new ReentrantLock();
 
     private final RestClientOperations operations;
-    private final String migrationKey;
     private final Duration idleBetweenTries;
 
-    public ElasticsearchDocumentLock(RestClientOperations operations, String key) {
-        this(operations, key, DEFAULT_IDLE_BETWEEN_TRIES);
+    public ElasticsearchDocumentLock(final RestClientOperations operations) {
+        this(operations, DEFAULT_IDLE_BETWEEN_TRIES);
     }
 
     @Override
@@ -129,7 +128,7 @@ public class ElasticsearchDocumentLock implements Lock {
         }
 
         try  {
-            this.operations.deleteLockRecord(this.migrationKey);
+            this.operations.deleteLockRecord();
         } catch (Exception e) {
             throw new IllegalStateException("Failed to release mutex");
         } finally {
@@ -150,10 +149,10 @@ public class ElasticsearchDocumentLock implements Lock {
      */
     private boolean doLock() {
         try {
-            this.operations.createLockRecord(this.migrationKey);
+            this.operations.createLockRecord();
             return true;
         } catch (Exception e) {
-            log.info("Failed to acquire lock for key [{}]", this.migrationKey, e);
+            log.info("Failed to acquire lock", e);
             return false;
         }
     }

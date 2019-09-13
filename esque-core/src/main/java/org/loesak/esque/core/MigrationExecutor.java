@@ -52,9 +52,9 @@ public class MigrationExecutor implements Closeable {
     public MigrationExecutor(
             @NonNull final RestClient client,
             @NonNull final String migrationKey) {
-        this.operations = new RestClientOperations(client);
+        this.operations = new RestClientOperations(client, migrationKey);
         this.migrationKey = migrationKey;
-        this.lock = new ElasticsearchDocumentLock(operations, migrationKey);
+        this.lock = new ElasticsearchDocumentLock(operations);
     }
 
     @Override
@@ -80,7 +80,7 @@ public class MigrationExecutor implements Closeable {
             this.initialize();
 
             final List<MigrationFile> files = this.loadMigrationFiles(); // TODO: this.migrationLoader.load();
-            final List<MigrationRecord> history = this.operations.getMigrationRecords(this.migrationKey);
+            final List<MigrationRecord> history = this.operations.getMigrationRecords();
 
             this.verifyStateIntegrity(files, history);
 
@@ -170,7 +170,7 @@ public class MigrationExecutor implements Closeable {
 
         // each migration record should match the information about the file that generated it. meaning the file wasnt modified
         history.forEach(record -> {
-            MigrationFile companion = files.stream().filter(file -> file.getMetadata().getFilename().equals(record.getFilename())).findFirst().get();
+            final MigrationFile companion = files.stream().filter(file -> file.getMetadata().getFilename().equals(record.getFilename())).findFirst().get();
 
             if (companion == null) {
                 throw new IllegalStateException(String.format("could not find migration file matching migration history record by filename [%s]", record.getFilename()));

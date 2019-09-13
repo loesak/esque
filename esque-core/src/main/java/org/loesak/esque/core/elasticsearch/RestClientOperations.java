@@ -42,10 +42,12 @@ public class RestClientOperations implements Closeable {
     private static final String HTTP_METHOD_DELETE = "DELETE";
 
     private final RestClient restClient;
+    private final String migrationKey;
     private final ObjectMapper objectMapper;
 
-    public RestClientOperations(RestClient restClient) {
+    public RestClientOperations(final RestClient restClient, final String migrationKey) {
         this.restClient = restClient;
+        this.migrationKey = migrationKey;
 
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
@@ -97,9 +99,9 @@ public class RestClientOperations implements Closeable {
         }
     }
 
-    public void createLockRecord(final String migrationKey) throws Exception {
+    public void createLockRecord() throws Exception {
         try {
-            log.info("Creating lock document for migration key [{}]", migrationKey);
+            log.info("Creating lock document for migration key [{}]", this.migrationKey);
 
             Request request = new Request(
                     HTTP_METHOD_PUT,
@@ -107,7 +109,7 @@ public class RestClientOperations implements Closeable {
                             "%s/_doc/%s:%s",
                             MIGRATION_DOCUMENT_INDEX,
                             MIGRATION_LOCK_DOCUMENT_ID_PREFIX,
-                            migrationKey));
+                            this.migrationKey));
             request.addParameter("op_type", "create");
             request.setJsonEntity(this.objectMapper.writeValueAsString(new MigrationLock(Instant.now())));
 
@@ -117,16 +119,16 @@ public class RestClientOperations implements Closeable {
             */
             this.sendRequest(request);
 
-            log.info("Lock document for migration key [{}] created", migrationKey);
+            log.info("Lock document for migration key [{}] created", this.migrationKey);
         } catch (Exception e) {
-            log.error("Failed to create lock document for migration key [{}]", migrationKey, e);
+            log.error("Failed to create lock document for migration key [{}]", this.migrationKey, e);
             throw e;
         }
     }
 
-    public void deleteLockRecord(final String migrationKey) throws IOException {
+    public void deleteLockRecord() throws Exception {
         try {
-            log.info("Deleting lock document for key [{}]", migrationKey);
+            log.info("Deleting lock document for key [{}]", this.migrationKey);
 
             this.sendRequest(
                     new Request(
@@ -135,24 +137,24 @@ public class RestClientOperations implements Closeable {
                                     "%s/_doc/%s:%s",
                                     MIGRATION_DOCUMENT_INDEX,
                                     MIGRATION_LOCK_DOCUMENT_ID_PREFIX,
-                                    migrationKey)));
+                                    this.migrationKey)));
 
-            log.info("Lock document for key [{}] deleted", migrationKey);
+            log.info("Lock document for key [{}] deleted", this.migrationKey);
         } catch (Exception e) {
-            log.error("Failed to delete lock document for key [{}]", migrationKey, e);
+            log.error("Failed to delete lock document for key [{}]", this.migrationKey, e);
             throw e;
         }
     }
 
-    public List<MigrationRecord> getMigrationRecords(final String migrationKey) throws IOException {
+    public List<MigrationRecord> getMigrationRecords() throws Exception {
         try {
-            log.info("Getting migration records for migration key [{}]", migrationKey);
+            log.info("Getting migration records for migration key [{}]", this.migrationKey);
 
             Request request = new Request(HTTP_METHOD_GET, String.format("%s/_search", MIGRATION_DOCUMENT_INDEX));
             request.setJsonEntity(String.format(
                     // TODO: objectify this JSON?
                     "{ \"query\": { \"bool\": { \"filter\": [ { \"term\": { \"migration.migrationKey\": \"%s\" } } ] } } }",
-                    migrationKey));
+                    this.migrationKey));
 
             Response response = this.sendRequest(request);
             Map<String, Object> content = this.objectMapper.readValue(response.getEntity().getContent(), new TypeReference<Map<String, Object>>() {});
@@ -171,13 +173,13 @@ public class RestClientOperations implements Closeable {
 
             return records;
         } catch (Exception e) {
-            log.error("Failed to get migration records for migration key [{}}", migrationKey, e);
+            log.error("Failed to get migration records for migration key [{}}", this.migrationKey, e);
             throw e;
         }
     }
 
     // TODO: iterating over the migration file queries should be done outside of this class
-    public void executeMigrationFileQueries(final MigrationFile migrationFile) throws IOException {
+    public void executeMigrationFileQueries(final MigrationFile migrationFile) throws Exception {
         try {
             log.info("Executing queries defined in migration file [{}]", migrationFile.getMetadata().getFilename());
 
@@ -213,7 +215,11 @@ public class RestClientOperations implements Closeable {
         }
     }
 
-    public void createMigrationRecord(final MigrationRecord record) throws IOException {
+    public void createMigrationRecord(final MigrationRecord record) throws Exception {
+        if (!record.getMigrationKey().equals(this.migrationKey)) {
+            throw new IllegalStateException("migration record migration key must match operational migration key");
+        }
+
         try {
             log.info("Creating migration record for migration definition file [{}]", record.getFilename());
 
@@ -234,7 +240,7 @@ public class RestClientOperations implements Closeable {
         }
     }
 
-    private Response sendRequest(Request request) throws IOException {
+    private Response sendRequest(Request request) throws Exception {
         log.debug("sending request [{}]", request);
 
         Response response = this.restClient.performRequest(request);
