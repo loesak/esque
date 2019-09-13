@@ -1,0 +1,45 @@
+{
+  "aliases" : {},
+  "settings" : {
+    // TODO:
+  },
+  "mappings" : {
+    "properties" : {
+      "lock" : {
+        "properties" : {
+          "date" : {
+            "type" : "date"
+          }
+        }
+      },
+      "migration" : {
+        "properties" : {
+          "checksum" : {
+            "type" : "long"
+          },
+          "description" : {
+            "type" : "keyword"
+          },
+          "executionTime" : {
+            "type" : "long"
+          },
+          "filename" : {
+            "type" : "keyword"
+          },
+          "installedOn" : {
+            "type" : "date"
+          },
+          "migrationKey" : {
+            "type" : "keyword"
+          },
+          "order" : {
+            "type" : "long"
+          },
+          "version" : {
+            "type" : "keyword"
+          }
+        }
+      }
+    }
+  }
+}
