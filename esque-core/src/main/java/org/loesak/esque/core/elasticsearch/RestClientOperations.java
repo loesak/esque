@@ -19,6 +19,7 @@ import org.loesak.esque.core.elasticsearch.documents.MigrationLock;
 import org.loesak.esque.core.elasticsearch.documents.MigrationRecord;
 import org.loesak.esque.core.yaml.model.MigrationFile;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
 TODO: change try/catch blocks from logging and rethrowing to throwing own wrapped exception
  */
 @Slf4j
-public class RestClientOperations {
+public class RestClientOperations implements Closeable {
 
     private static final String MIGRATION_DOCUMENT_INDEX = ".esque";
     private static final String MIGRATION_LOCK_DOCUMENT_ID_PREFIX = "lock";
@@ -53,6 +54,11 @@ public class RestClientOperations {
         this.objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.restClient.close();
     }
 
     public Boolean checkMigrationIndexExists() throws Exception {
@@ -152,14 +158,14 @@ public class RestClientOperations {
             Map<String, Object> content = this.objectMapper.readValue(response.getEntity().getContent(), new TypeReference<Map<String, Object>>() {});
 
             List<MigrationRecord> records = content.entrySet().stream()
-                   .filter(entry -> entry.getKey().equals("hits"))
-                   .flatMap(entry -> ((Map<String, Object>) entry.getValue()).entrySet().stream())
-                   .filter(entry -> entry.getKey().equals("hits"))
-                   .flatMap(entry -> ((List<Map<String, Object>>) entry.getValue()).stream())
-                   .flatMap(item -> item.entrySet().stream())
-                   .filter(entry -> entry.getKey().equals("_source"))
-                   .map(entry -> (MigrationRecord) this.objectMapper.convertValue(entry.getValue(), new TypeReference<MigrationRecord>() {}))
-                   .collect(Collectors.toUnmodifiableList());
+                                                   .filter(entry -> entry.getKey().equals("hits"))
+                                                   .flatMap(entry -> ((Map<String, Object>) entry.getValue()).entrySet().stream())
+                                                   .filter(entry -> entry.getKey().equals("hits"))
+                                                   .flatMap(entry -> ((List<Map<String, Object>>) entry.getValue()).stream())
+                                                   .flatMap(item -> item.entrySet().stream())
+                                                   .filter(entry -> entry.getKey().equals("_source"))
+                                                   .map(entry -> (MigrationRecord) this.objectMapper.convertValue(entry.getValue(), new TypeReference<MigrationRecord>() {}))
+                                                   .collect(Collectors.toUnmodifiableList());
 
             log.info("Found [{}] migration records", records.size());
 
@@ -237,5 +243,4 @@ public class RestClientOperations {
 
         return response;
     }
-
 }

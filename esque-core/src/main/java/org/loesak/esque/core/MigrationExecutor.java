@@ -10,6 +10,7 @@ import org.loesak.esque.core.elasticsearch.documents.MigrationRecord;
 import org.loesak.esque.core.elasticsearch.RestClientOperations;
 import org.loesak.esque.core.yaml.model.MigrationFile;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -27,7 +28,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class MigrationExecutor {
+public class MigrationExecutor implements Closeable {
 
     private static final String MIGRATION_DEFINITION_DIRECTORY = "es.migration";
     private static final String MIGRATION_DEFINITION_FILE_NAME_REGEX = "^V((\\d+\\.?)+)__(\\w+)\\.yml$";
@@ -54,6 +55,23 @@ public class MigrationExecutor {
         this.operations = new RestClientOperations(client);
         this.migrationKey = migrationKey;
         this.lock = new ElasticsearchDocumentLock(operations, migrationKey);
+    }
+
+    @Override
+    public void close() throws IOException {
+        try {
+            this.lock.unlock();
+        } catch (IllegalMonitorStateException e) {
+            // intentionally left blank. means lock is already unlocked
+        } catch (Exception e) {
+            log.warn("failed to release a execution lock. you may need to manually delete the lock document yourself", e);
+        }
+
+        try {
+            this.operations.close();
+        } catch (Exception e) {
+            log.warn("failed to close rest client. this is likely not an issue", e);
+        }
     }
 
     public void execute() {
@@ -201,8 +219,4 @@ public class MigrationExecutor {
 
         return ByteBuffer.wrap(MigrationExecutor.MESSAGE_DIGEST.digest()).getInt();
     }
-
-    private void verifyState() {
-    }
-
 }
