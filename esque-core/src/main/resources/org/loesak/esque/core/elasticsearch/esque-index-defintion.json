@@ -1,7 +1,9 @@
 {
-  "aliases" : {},
   "settings" : {
-    // TODO:
+    "index" : {
+      "number_of_shards" : "1",
+      "refresh_interval" : "1s"
+    }
   },
   "mappings" : {
     "properties" : {

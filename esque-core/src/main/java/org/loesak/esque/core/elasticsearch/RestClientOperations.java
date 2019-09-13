@@ -10,6 +10,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
@@ -77,7 +78,9 @@ public class RestClientOperations {
             log.info("Creating migration index with name [{}]", MIGRATION_DOCUMENT_INDEX);
 
             Request request = new Request(HTTP_METHOD_PUT, MIGRATION_DOCUMENT_INDEX);
-            // TODO: settings and mappings from file esque-index-definition.json
+            request.setEntity(new InputStreamEntity(
+                    this.getClass().getClassLoader().getResourceAsStream("org/loesak/esque/core/elasticsearch/esque-index-defintion.json"),
+                    ContentType.APPLICATION_JSON));
 
             this.sendRequest(request);
 
