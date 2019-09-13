@@ -90,7 +90,7 @@ public class MigrationExecutor implements Closeable {
                      try {
                          log.info("Attempting to acquire lock for execution");
 
-                         if (this.lock.tryLock(1, TimeUnit.MINUTES)) {
+                         if (this.lock.tryLock(5, TimeUnit.MINUTES)) {
                              log.info("Lock acquired. Executing queries defined in migration file [{}]", file.getMetadata().getFilename());
 
                              final Instant start = Instant.now();
