@@ -19,21 +19,22 @@ import org.loesak.esque.core.elasticsearch.documents.MigrationLock;
 import org.loesak.esque.core.elasticsearch.documents.MigrationRecord;
 import org.loesak.esque.core.yaml.model.MigrationFile;
 
+import java.beans.ConstructorProperties;
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-/*
-TODO: change try/catch blocks from logging and rethrowing to throwing own wrapped exception
- */
 @Slf4j
 public class RestClientOperations implements Closeable {
 
     private static final String MIGRATION_DOCUMENT_INDEX = ".esque";
+    private static final String MIGRATION_DOCUMENT_INDEX_DEFINITION_FILE_PATH = "org/loesak/esque/core/elasticsearch/esque-index-defintion.json";
     private static final String MIGRATION_LOCK_DOCUMENT_ID_PREFIX = "lock";
+    private static final String MIGRATION_RECORD_SEARCH_QUERY_TEMPLATE = "{ \"query\": { \"bool\": { \"filter\": [ { \"term\": { \"migration.migrationKey\": \"%s\" } } ] } } }";
 
     private static final String HTTP_METHOD_HEAD = "HEAD";
     private static final String HTTP_METHOD_GET = "GET";
@@ -41,29 +42,30 @@ public class RestClientOperations implements Closeable {
     private static final String HTTP_METHOD_POST = "POST";
     private static final String HTTP_METHOD_DELETE = "DELETE";
 
-    private final RestClient restClient;
+    private final RestClient client;
     private final String migrationKey;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper mapper;
 
-    public RestClientOperations(final RestClient restClient, final String migrationKey) {
-        this.restClient = restClient;
+    @ConstructorProperties({"client", "migrationKey"})
+    public RestClientOperations(final RestClient client, final String migrationKey) {
+        this.client = client;
         this.migrationKey = migrationKey;
 
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule());
-        this.objectMapper.registerModule(new Jdk8Module());
-        this.objectMapper.registerModule(new ParameterNamesModule());
-        this.objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        this.mapper = new ObjectMapper();
+        this.mapper.registerModule(new JavaTimeModule());
+        this.mapper.registerModule(new Jdk8Module());
+        this.mapper.registerModule(new ParameterNamesModule());
+        this.mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        this.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        this.mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
     @Override
     public void close() throws IOException {
-        this.restClient.close();
+        this.client.close();
     }
 
-    public Boolean checkMigrationIndexExists() throws Exception {
+    public Boolean checkMigrationIndexExists() {
         try {
             log.info("Checking if migration index with name [{}] exists", MIGRATION_DOCUMENT_INDEX);
 
@@ -76,30 +78,28 @@ public class RestClientOperations implements Closeable {
 
             return status;
         } catch (Exception e) {
-            log.error("Failed to check if migration index with name [{}] exists", MIGRATION_DOCUMENT_INDEX, e);
-            throw e;
+            throw new IllegalStateException(String.format("Failed to check if migration index with name [%s] exists", MIGRATION_DOCUMENT_INDEX), e);
         }
     }
 
-    public void createMigrationIndex() throws Exception {
+    public void createMigrationIndex() {
         try {
             log.info("Creating migration index with name [{}]", MIGRATION_DOCUMENT_INDEX);
 
             Request request = new Request(HTTP_METHOD_PUT, MIGRATION_DOCUMENT_INDEX);
             request.setEntity(new InputStreamEntity(
-                    this.getClass().getClassLoader().getResourceAsStream("org/loesak/esque/core/elasticsearch/esque-index-defintion.json"),
+                    Objects.requireNonNull(this.getClass().getClassLoader().getResourceAsStream(MIGRATION_DOCUMENT_INDEX_DEFINITION_FILE_PATH)),
                     ContentType.APPLICATION_JSON));
 
             this.sendRequest(request);
 
             log.info("Migration index with name [{}] created", MIGRATION_DOCUMENT_INDEX);
         } catch (Exception e) {
-            log.error("Failed to create migration index with name [{}]", MIGRATION_DOCUMENT_INDEX, e);
-            throw e;
+            throw new IllegalStateException(String.format("Failed to create migration index with name [%s]", MIGRATION_DOCUMENT_INDEX), e);
         }
     }
 
-    public void createLockRecord() throws Exception {
+    public void createLockRecord() {
         try {
             log.info("Creating lock document for migration key [{}]", this.migrationKey);
 
@@ -111,7 +111,7 @@ public class RestClientOperations implements Closeable {
                             MIGRATION_LOCK_DOCUMENT_ID_PREFIX,
                             this.migrationKey));
             request.addParameter("op_type", "create");
-            request.setJsonEntity(this.objectMapper.writeValueAsString(new MigrationLock(Instant.now())));
+            request.setJsonEntity(this.mapper.writeValueAsString(new MigrationLock(Instant.now())));
 
             /*
              because of the op_type query parameter value of create, if the lock
@@ -121,12 +121,11 @@ public class RestClientOperations implements Closeable {
 
             log.info("Lock document for migration key [{}] created", this.migrationKey);
         } catch (Exception e) {
-            log.error("Failed to create lock document for migration key [{}]", this.migrationKey, e);
-            throw e;
+            throw new IllegalStateException(String.format("Failed to create lock document for migration key [%s]", this.migrationKey), e);
         }
     }
 
-    public void deleteLockRecord() throws Exception {
+    public void deleteLockRecord() {
         try {
             log.info("Deleting lock document for key [{}]", this.migrationKey);
 
@@ -141,23 +140,21 @@ public class RestClientOperations implements Closeable {
 
             log.info("Lock document for key [{}] deleted", this.migrationKey);
         } catch (Exception e) {
-            log.error("Failed to delete lock document for key [{}]", this.migrationKey, e);
-            throw e;
+            throw new IllegalStateException(String.format("Failed to delete lock document for key [%s]", this.migrationKey), e);
         }
     }
 
-    public List<MigrationRecord> getMigrationRecords() throws Exception {
+    public List<MigrationRecord> getMigrationRecords() {
         try {
             log.info("Getting migration records for migration key [{}]", this.migrationKey);
 
             Request request = new Request(HTTP_METHOD_GET, String.format("%s/_search", MIGRATION_DOCUMENT_INDEX));
             request.setJsonEntity(String.format(
-                    // TODO: objectify this JSON?
-                    "{ \"query\": { \"bool\": { \"filter\": [ { \"term\": { \"migration.migrationKey\": \"%s\" } } ] } } }",
+                    MIGRATION_RECORD_SEARCH_QUERY_TEMPLATE,
                     this.migrationKey));
 
             Response response = this.sendRequest(request);
-            Map<String, Object> content = this.objectMapper.readValue(response.getEntity().getContent(), new TypeReference<Map<String, Object>>() {});
+            Map<String, Object> content = this.mapper.readValue(response.getEntity().getContent(), new TypeReference<Map<String, Object>>() {});
 
             List<MigrationRecord> records = content.entrySet().stream()
                                                    .filter(entry -> entry.getKey().equals("hits"))
@@ -166,20 +163,19 @@ public class RestClientOperations implements Closeable {
                                                    .flatMap(entry -> ((List<Map<String, Object>>) entry.getValue()).stream())
                                                    .flatMap(item -> item.entrySet().stream())
                                                    .filter(entry -> entry.getKey().equals("_source"))
-                                                   .map(entry -> (MigrationRecord) this.objectMapper.convertValue(entry.getValue(), new TypeReference<MigrationRecord>() {}))
+                                                   .map(entry -> (MigrationRecord) this.mapper.convertValue(entry.getValue(), new TypeReference<MigrationRecord>() {}))
                                                    .collect(Collectors.toUnmodifiableList());
 
             log.info("Found [{}] migration records", records.size());
 
             return records;
         } catch (Exception e) {
-            log.error("Failed to get migration records for migration key [{}}", this.migrationKey, e);
-            throw e;
+            throw new IllegalStateException(String.format("Failed to get migration records for migration key [%s]", this.migrationKey), e);
         }
     }
 
     // TODO: iterating over the migration file queries should be done outside of this class
-    public void executeMigrationFileQueries(final MigrationFile migrationFile) throws Exception {
+    public void executeMigrationFileQueries(final MigrationFile migrationFile) {
         try {
             log.info("Executing queries defined in migration file [{}]", migrationFile.getMetadata().getFilename());
 
@@ -192,7 +188,7 @@ public class RestClientOperations implements Closeable {
 
                     Request request = new Request(definition.getMethod(), definition.getPath());
                     if (definition.getParams() != null) {
-                        definition.getParams().entrySet().forEach(entry -> request.addParameter(entry.getKey(), entry.getValue()));
+                        definition.getParams().forEach(request::addParameter);
                     }
 
                     if (definition.getBody() != null && !definition.getBody().trim().equals("")) {
@@ -203,19 +199,22 @@ public class RestClientOperations implements Closeable {
 
                     log.info("Query in position [{}] defined in migration file [{}] executed successfully", position, migrationFile.getMetadata().getFilename());
                 } catch (Exception e) {
-                    log.error("Failed to execute query in position [{}] defined in migration file [{}]", position, migrationFile.getMetadata().getFilename(), e);
-                    throw e;
+                    throw new IllegalStateException(
+                            String.format(
+                                    "Failed to execute query in position [%d] defined in migration file [%s]",
+                                    position,
+                                    migrationFile.getMetadata().getFilename()),
+                            e);
                 }
             }
 
             log.info("Execution complete for queries defined in migration file [{}]", migrationFile.getMetadata().getFilename());
         } catch (Exception e) {
-            log.error("Failed to execute migration query", e);
-            throw e;
+            throw new IllegalStateException("Failed to execute migration query", e);
         }
     }
 
-    public void createMigrationRecord(final MigrationRecord record) throws Exception {
+    public void createMigrationRecord(final MigrationRecord record) {
         if (!record.getMigrationKey().equals(this.migrationKey)) {
             throw new IllegalStateException("migration record migration key must match operational migration key");
         }
@@ -229,21 +228,20 @@ public class RestClientOperations implements Closeable {
                             "%s/_doc",
                             MIGRATION_DOCUMENT_INDEX));
             request.addParameter("refresh", "true");
-            request.setJsonEntity(this.objectMapper.writeValueAsString(record));
+            request.setJsonEntity(this.mapper.writeValueAsString(record));
 
             this.sendRequest(request);
 
             log.info("Migration record for migration definition file [{}] created", record.getFilename());
         } catch (Exception e) {
-            log.error("Failed to creat migration record for migration definition file [{}]", record.getFilename(), e);
-            throw e;
+            throw new IllegalStateException(String.format("Failed to creat migration record for migration definition file [%s]", record.getFilename()), e);
         }
     }
 
     private Response sendRequest(Request request) throws Exception {
         log.debug("sending request [{}]", request);
 
-        Response response = this.restClient.performRequest(request);
+        Response response = this.client.performRequest(request);
 
         log.debug("received response [{}]", response);
 
