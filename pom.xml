@@ -9,7 +9,7 @@
 
     <modules>
         <module>esque-core</module>
-        <module>esque-springboot</module>
+        <module>esque-springboot-starter</module>
         <module>esque-examples</module>
     </modules>
 
