@@ -7,9 +7,35 @@
     <parent>
         <groupId>org.loesak</groupId>
         <artifactId>esque</artifactId>
-        <version>0.0.2</version>
+        <version>0.0.3</version>
     </parent>
 
     <artifactId>esque-examples</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>esque-example-simple</module>
+        <module>esque-example-springboot</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <!-- these are just example projects. we do not need to install or deploy them -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

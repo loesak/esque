@@ -1,11 +1,12 @@
-package org.loesak.esque.core;
+package org.loesak.esque.examples.simple;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
+import org.loesak.esque.core.MigrationExecutor;
 import org.loesak.esque.core.elasticsearch.RestClientOperations;
 
-public class Test {
+public class Main {
 
     public static void main(String... args) throws Exception {
 
@@ -25,5 +26,4 @@ public class Test {
         }
 
     }
-
 }

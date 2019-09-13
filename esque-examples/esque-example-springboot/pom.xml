@@ -6,10 +6,11 @@
 
     <parent>
         <groupId>org.loesak</groupId>
-        <artifactId>esque</artifactId>
+        <artifactId>esque-examples</artifactId>
         <version>0.0.3</version>
     </parent>
 
-    <artifactId>esque-springboot</artifactId>
+    <artifactId>esque-example-springboot</artifactId>
+
 
 </project>

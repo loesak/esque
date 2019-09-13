@@ -6,10 +6,18 @@
 
     <parent>
         <groupId>org.loesak</groupId>
-        <artifactId>esque</artifactId>
+        <artifactId>esque-examples</artifactId>
         <version>0.0.3</version>
     </parent>
 
-    <artifactId>esque-springboot</artifactId>
+    <artifactId>esque-example-simple</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.loesak</groupId>
+            <artifactId>esque-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 
 </project>
