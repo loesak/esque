@@ -16,7 +16,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * https://github.com/spring-projects/spring-integration/blob/master/spring-integration-zookeeper/src/main/java/org/springframework/integration/zookeeper/lock/ZookeeperLockRegistry.java#L216
  * https://github.com/spring-projects/spring-integration/blob/master/spring-integration-redis/src/main/java/org/springframework/integration/redis/util/RedisLockRegistry.java#L181
  */
-// TODO: log the shit out of this class
 @Slf4j
 public class ElasticsearchDocumentLock implements Lock {
 
@@ -148,7 +147,6 @@ public class ElasticsearchDocumentLock implements Lock {
     }
 
     /*
-     TODO:
      i'm not entirely sure what happens when there is contention with this type of request. I'm currently
      assuming that Elasticsearch will ensure that the first one will win and all others will fail. However,
      this should be tested

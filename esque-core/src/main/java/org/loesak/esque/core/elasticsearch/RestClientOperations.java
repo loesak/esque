@@ -174,43 +174,24 @@ public class RestClientOperations implements Closeable {
         }
     }
 
-    // TODO: iterating over the migration file queries should be done outside of this class
-    public void executeMigrationFileQueries(final MigrationFile migrationFile) {
+    public void executeMigrationDefinition(final MigrationFile.MigrationFileRequestDefinition definition) {
         try {
-            log.info("Executing queries defined in migration file [{}]", migrationFile.getMetadata().getFilename());
+            log.info("Executing migration query definition");
 
-            List<MigrationFile.MigrationFileRequestDefinition> requests = migrationFile.getContents().getRequests();
-            for (MigrationFile.MigrationFileRequestDefinition definition : requests) {
-                final Integer position = requests.indexOf(definition);
-
-                try {
-                    log.info("Executing query in position [{}] defined in migration file [{}]", position, migrationFile.getMetadata().getFilename());
-
-                    Request request = new Request(definition.getMethod(), definition.getPath());
-                    if (definition.getParams() != null) {
-                        definition.getParams().forEach(request::addParameter);
-                    }
-
-                    if (definition.getBody() != null && !definition.getBody().trim().equals("")) {
-                        request.setEntity(new NStringEntity(definition.getBody(), ContentType.parse(definition.getContentType())));
-                    }
-
-                    this.sendRequest(request);
-
-                    log.info("Query in position [{}] defined in migration file [{}] executed successfully", position, migrationFile.getMetadata().getFilename());
-                } catch (Exception e) {
-                    throw new IllegalStateException(
-                            String.format(
-                                    "Failed to execute query in position [%d] defined in migration file [%s]",
-                                    position,
-                                    migrationFile.getMetadata().getFilename()),
-                            e);
-                }
+            Request request = new Request(definition.getMethod(), definition.getPath());
+            if (definition.getParams() != null) {
+                definition.getParams().forEach(request::addParameter);
             }
 
-            log.info("Execution complete for queries defined in migration file [{}]", migrationFile.getMetadata().getFilename());
+            if (definition.getBody() != null && !definition.getBody().trim().equals("")) {
+                request.setEntity(new NStringEntity(definition.getBody(), ContentType.parse(definition.getContentType())));
+            }
+
+            this.sendRequest(request);
+
+            log.info("Migration query definition executed successfully");
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to execute migration query", e);
+            throw new IllegalStateException("Failed to execute migration query definition", e);
         }
     }
 
