@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.loesak</groupId>
         <artifactId>esque</artifactId>
-        <version>0.0.3</version>
+        <version>0.0.4</version>
     </parent>
 
     <artifactId>esque-examples</artifactId>
@@ -16,6 +16,8 @@
     <modules>
         <module>esque-example-simple</module>
         <module>esque-example-springboot</module>
+        <module>esque-example-es-auth</module>
+        <module>esque-example-aws-auth</module>
     </modules>
 
     <build>
