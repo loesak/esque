@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.client.RestClient;
 import org.loesak.esque.core.concurrent.ElasticsearchDocumentLock;
 import org.loesak.esque.core.elasticsearch.documents.MigrationRecord;
 import org.loesak.esque.core.elasticsearch.RestClientOperations;
@@ -48,25 +49,11 @@ public class MigrationExecutor {
     private final Lock lock;
 
     public MigrationExecutor(
-            @NonNull final RestClientOperations operations,
+            @NonNull final RestClient client,
             @NonNull final String migrationKey) {
-        this(operations, migrationKey, new ElasticsearchDocumentLock(operations, migrationKey));
-    }
-
-    public MigrationExecutor(
-            @NonNull final RestClientOperations operations,
-            @NonNull final String migrationKey,
-            @NonNull final Duration lockRetryDelay) {
-        this(operations, migrationKey, new ElasticsearchDocumentLock(operations, migrationKey, lockRetryDelay));
-    }
-
-    public MigrationExecutor(
-            @NonNull final RestClientOperations operations,
-            @NonNull final String migrationKey,
-            @NonNull final Lock lock) {
-        this.operations = operations;
+        this.operations = new RestClientOperations(client);
         this.migrationKey = migrationKey;
-        this.lock = lock;
+        this.lock = new ElasticsearchDocumentLock(operations, migrationKey);
     }
 
     public void execute() {

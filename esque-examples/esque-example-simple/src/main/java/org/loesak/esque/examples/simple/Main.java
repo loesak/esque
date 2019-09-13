@@ -13,16 +13,12 @@ public class Main {
         RestClientBuilder builder = RestClient.builder(
                 new HttpHost("localhost", 9200, "http"));
 
-        RestClient restClient = builder.build();
+        RestClient client = builder.build();
 
         try {
-            RestClientOperations operations = new RestClientOperations(restClient);
-
-            MigrationExecutor executor = new MigrationExecutor(operations, "foober");
-
-            executor.execute();
+            new MigrationExecutor(client, "foober").execute();
         } finally {
-            restClient.close();
+            client.close();
         }
 
     }
