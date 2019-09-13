@@ -14,10 +14,13 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>esque-example-simple</module>
-        <module>esque-example-springboot</module>
-        <module>esque-example-es-auth</module>
-        <module>esque-example-aws-auth</module>
+        <module>esque-example-core-simple</module>
+        <module>esque-example-core-es-auth</module>
+        <module>esque-example-core-aws-auth</module>
+        <module>esque-example-springboot-simple</module>
+        <module>esque-example-springboot-es-auth</module>
+        <module>esque-example-springboot-aws-auth</module>
+        <module>esque-example-springboot-complex</module>
     </modules>
 
     <build>

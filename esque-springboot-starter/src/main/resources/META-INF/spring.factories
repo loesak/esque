@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-    org.loesak.esque.springboot.starter.autoconfigure.EsqueAutoConfiguration
+    org.loesoft.esque.springboot.starter.autoconfigure.EsqueAutoConfiguration

@@ -1,0 +1,8 @@
+---
+spring:
+  application:
+    name: esque-example-springboot-simple
+
+esque:
+  migration-key: ${spring.application.name}
+  uris: http://localhost:9200
