@@ -5,11 +5,13 @@
     <groupId>org.loesak</groupId>
     <artifactId>esque</artifactId>
     <version>0.0.1</version>
+    <packaging>pom</packaging>
+
     <modules>
         <module>esque-core</module>
         <module>esque-springboot</module>
+        <module>esque-examples</module>
     </modules>
-    <packaging>pom</packaging>
 
     <properties>
         <java.version>11</java.version>
@@ -17,36 +19,6 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
-    <dependencies>
-        <!-- for logging -->
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.28</version>
-        </dependency>
-
-        <!-- for compilation only -->
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.8</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- for testing only -->
-
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
-            <optional>true</optional>
-            <scope>test</scope>
-        </dependency>
-
-    </dependencies>
 
     <distributionManagement>
         <repository>
