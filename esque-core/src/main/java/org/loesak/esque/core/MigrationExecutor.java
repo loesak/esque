@@ -172,10 +172,6 @@ public class MigrationExecutor implements Closeable {
         history.forEach(record -> {
             final MigrationFile companion = files.stream().filter(file -> file.getMetadata().getFilename().equals(record.getFilename())).findFirst().get();
 
-            if (companion == null) {
-                throw new IllegalStateException(String.format("could not find migration file matching migration history record by filename [%s]", record.getFilename()));
-            }
-
             if (record.getOrder() != files.indexOf(companion)
                     || !record.getVersion().equals(companion.getMetadata().getVersion())
                     || !record.getDescription().equals(companion.getMetadata().getDescription())
