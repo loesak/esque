@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class MigrationExecutor implements Closeable {
+public class Esque implements Closeable {
 
     private static final String MIGRATION_DEFINITION_DIRECTORY = "es.migration";
     private static final String MIGRATION_DEFINITION_FILE_NAME_REGEX = "^V((\\d+\\.?)+)__(\\w+)\\.yml$";
@@ -49,7 +49,7 @@ public class MigrationExecutor implements Closeable {
     private final String migrationKey;
     private final Lock lock;
 
-    public MigrationExecutor(
+    public Esque(
             @NonNull final RestClient client,
             @NonNull final String migrationKey) {
         this.operations = new RestClientOperations(client, migrationKey);
@@ -146,7 +146,7 @@ public class MigrationExecutor implements Closeable {
         List<MigrationFile> files = Files.list(Paths.get(this.getClass().getClassLoader().getResource(MIGRATION_DEFINITION_DIRECTORY + "/").toURI()))
                     .filter(Files::isRegularFile)
                     .filter(path -> path.toFile().getName().matches(MIGRATION_DEFINITION_FILE_NAME_REGEX))
-                    .map(MigrationExecutor::read)
+                    .map(Esque::read)
                     .sorted()
                     .collect(Collectors.toUnmodifiableList());
 
@@ -200,7 +200,7 @@ public class MigrationExecutor implements Closeable {
                             filename,
                             matcher.group(1),
                             matcher.group(3),
-                            MigrationExecutor.calculateChecksum(path)),
+                            Esque.calculateChecksum(path)),
                     YAML_MAPPER.readValue(Files.newInputStream(path), MigrationFile.MigrationFileContents.class));
 
             return migrationFile;
@@ -210,9 +210,9 @@ public class MigrationExecutor implements Closeable {
     }
 
     private static Integer calculateChecksum(Path path) throws NoSuchAlgorithmException, IOException {
-        MigrationExecutor.MESSAGE_DIGEST.reset();
-        MigrationExecutor.MESSAGE_DIGEST.update(Files.readAllBytes(path));
+        Esque.MESSAGE_DIGEST.reset();
+        Esque.MESSAGE_DIGEST.update(Files.readAllBytes(path));
 
-        return ByteBuffer.wrap(MigrationExecutor.MESSAGE_DIGEST.digest()).getInt();
+        return ByteBuffer.wrap(Esque.MESSAGE_DIGEST.digest()).getInt();
     }
 }
