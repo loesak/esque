@@ -31,7 +31,7 @@ public class MigrationFile implements Comparable<MigrationFile> {
     public static class MigrationFileRequestDefinition {
         @NonNull private final String method;
         @NonNull private final String path;
-        @NonNull private final String contentType;
+        private final String contentType;
         private final Map<String, String> params;
         private final String body;
     }
