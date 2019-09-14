@@ -2,12 +2,12 @@
 requests:
   # create the index for the first schema version
   - method: "PUT"
-    path: "esque-example-core-simple-v1"
+    path: "/esque-example-core-simple-v1"
     contentType: application/json; charset=utf-8
 
   # create the alias to point to first schema version index
   - method: "POST"
-    path: "_aliases"
+    path: "/_aliases"
     contentType: application/json; charset=utf-8
     body: >
       {

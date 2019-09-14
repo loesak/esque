@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RestClientOperations implements Closeable {
 
-    private static final String MIGRATION_DOCUMENT_INDEX = ".esque";
+    private static final String MIGRATION_DOCUMENT_INDEX = "/.esque";
     private static final String MIGRATION_DOCUMENT_INDEX_DEFINITION_FILE_PATH = "org/loesoft/esque/core/elasticsearch/esque-index-defintion.json";
     private static final String MIGRATION_LOCK_DOCUMENT_ID_PREFIX = "lock";
     private static final String MIGRATION_RECORD_SEARCH_QUERY_TEMPLATE = "{ \"query\": { \"bool\": { \"filter\": [ { \"term\": { \"migration.migrationKey\": \"%s\" } } ] } } }";
