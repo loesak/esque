@@ -156,7 +156,8 @@ public class ElasticsearchDocumentLock implements Lock {
             this.operations.createLockRecord();
             return true;
         } catch (Exception e) {
-            log.info("Failed to acquire lock", e);
+            // TODO: should look at the exception type to see if the exception is due to the lock already existing or some other non-recoverable exception
+            log.debug("Failed to acquire lock", e);
             return false;
         }
     }

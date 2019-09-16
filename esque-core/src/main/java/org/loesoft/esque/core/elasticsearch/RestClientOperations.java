@@ -118,6 +118,10 @@ public class RestClientOperations implements Closeable {
         }
     }
 
+    /*
+    TODO: should differentiate between a failed call and a lock document already existing.
+     A lock document already existing should throw a LockAlreadyExists exception so that the caller can handle a true connection failure appropriately
+     */
     public void createLockRecord() {
         try {
             log.info("Creating lock document for migration key [{}]", this.migrationKey);
