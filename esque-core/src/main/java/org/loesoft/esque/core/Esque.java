@@ -19,19 +19,28 @@ import java.util.concurrent.locks.Lock;
 
 @Slf4j
 public class Esque implements Closeable {
+    private final MigrationFileLoader migrationLoader = new MigrationFileLoader();
 
     private final RestClientOperations operations;
-    private final String migrationKey;
     private final Lock lock;
 
-    private final MigrationFileLoader migrationLoader = new MigrationFileLoader();
+    private final String migrationKey;
+    private final String migrationUser;
 
     public Esque(
             @NonNull final RestClient client,
             @NonNull final String migrationKey) {
+        this(client, migrationKey, null);
+    }
+
+    public Esque(
+            @NonNull final RestClient client,
+            @NonNull final String migrationKey,
+            final String migrationUser) {
         this.operations = new RestClientOperations(client, migrationKey);
-        this.migrationKey = migrationKey;
         this.lock = new ElasticsearchDocumentLock(operations);
+        this.migrationKey = migrationKey;
+        this.migrationUser = migrationUser;
     }
 
     @Override
@@ -128,34 +137,40 @@ public class Esque implements Closeable {
                     if (this.lock.tryLock(5, TimeUnit.MINUTES)) {
                         log.info("Lock acquired. Executing queries defined in migration file [{}]", file.getMetadata().getFilename());
 
-                        final Instant start = Instant.now();
-                        this.runMigrationForFile(file);
-                        final Instant end = Instant.now();
+                        // check to see if migration has already ran. entirely possible in a distributed system
+                        if (this.operations.getMigrationRecordForMigrationFile(file, this.migrationKey) != null) {
+                            log.info("Migration for migration file [{}] and migration key [{}] appears to already have been executed. Skipping", file.getMetadata().getFilename(), this.migrationKey);
+                        } else {
+                            final Instant start = Instant.now();
+                            this.runMigrationForFile(file);
+                            final Instant end = Instant.now();
 
-                        final Long duration = Duration.between(start, end).toMillis();
+                            final Long duration = Duration.between(start, end).toMillis();
 
-                        log.info("Execution complete for migration file [{}]. Took [{}] milliseconds", file.getMetadata().getFilename(), duration);
+                            log.info("Execution complete for migration file [{}]. Took [{}] milliseconds", file.getMetadata().getFilename(), duration);
 
-                        final MigrationRecord record = new MigrationRecord(
-                                this.migrationKey,
-                                files.indexOf(file),
-                                file.getMetadata().getFilename(),
-                                file.getMetadata().getVersion(),
-                                file.getMetadata().getDescription(),
-                                file.getMetadata().getChecksum(),
-                                null, // TODO: user if any
-                                end,
-                                duration);
+                            final MigrationRecord record = new MigrationRecord(
+                                    this.migrationKey,
+                                    files.indexOf(file),
+                                    file.getMetadata().getFilename(),
+                                    file.getMetadata().getVersion(),
+                                    file.getMetadata().getDescription(),
+                                    file.getMetadata().getChecksum(),
+                                    this.migrationUser,
+                                    end,
+                                    duration);
 
-                        this.operations.createMigrationRecord(record);
-
+                            this.operations.createMigrationRecord(record);
+                        }
                     } else {
-                        // TODO: this could happen for long running queries
+                        // TODO: this could happen for long running queries. need to look for something a bit smarter or allow to be configurable
                         log.error("Failed to acquire lock in the allotted time period. Did a lock not get cleared as part of a previous execution?");
                         throw new IllegalStateException("failed to acquire lock");
                     }
                 } catch (Exception e) {
                     throw new RuntimeException(String.format("Failed to execute queries in migration file [%s]", file.getMetadata().getFilename()), e);
+
+                    // TODO: should we write a "FAILED" migration record?
                 } finally {
                     log.info("Releasing execution lock");
                     this.lock.unlock();

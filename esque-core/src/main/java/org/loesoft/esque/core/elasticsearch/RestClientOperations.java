@@ -14,6 +14,7 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
+import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
 import org.loesoft.esque.core.elasticsearch.documents.MigrationLock;
 import org.loesoft.esque.core.elasticsearch.documents.MigrationRecord;
@@ -34,7 +35,8 @@ public class RestClientOperations implements Closeable {
     private static final String MIGRATION_DOCUMENT_INDEX = "/.esque";
     private static final String MIGRATION_DOCUMENT_INDEX_DEFINITION_FILE_PATH = "org/loesoft/esque/core/elasticsearch/esque-index-defintion.json";
     private static final String MIGRATION_LOCK_DOCUMENT_ID_PREFIX = "lock";
-    private static final String MIGRATION_RECORD_SEARCH_QUERY_TEMPLATE = "{ \"query\": { \"bool\": { \"filter\": [ { \"term\": { \"migration.migrationKey\": \"%s\" } } ] } } }";
+    private static final String MIGRATION_RECORD_SEARCH_QUERY_TEMPLATE_FIND_ALL_BY_MIGRATION_KEY = "{\"query\":{\"bool\":{\"filter\":[{\"term\":{\"migration.migrationKey\":\"%s\"}}]}}}";
+    private static final String MIGRATION_RECORD_SEARCH_QUERY_TEMPLATE_FIND_ONE_BY_MIGRATION_KEY_AND_MIGRATION_FILENAME = "{\"query\":{\"bool\":{\"filter\":[{\"term\":{\"migration.migrationKey\":\"%s\"}},{\"term\":{\"migration.filename\":\"%s\"}}]}}}";
 
     private static final String HTTP_METHOD_HEAD = "HEAD";
     private static final String HTTP_METHOD_GET = "GET";
@@ -91,7 +93,24 @@ public class RestClientOperations implements Closeable {
                     Objects.requireNonNull(this.getClass().getClassLoader().getResourceAsStream(MIGRATION_DOCUMENT_INDEX_DEFINITION_FILE_PATH)),
                     ContentType.APPLICATION_JSON));
 
-            this.sendRequest(request);
+            try {
+                this.sendRequest(request);
+            } catch (ResponseException e) {
+                Map<String, Object> content = this.mapper.readValue(((ResponseException) e).getResponse().getEntity().getContent(), new TypeReference<Map<String,Object>>(){});
+                Boolean alreadyExists = content.entrySet().stream()
+                       .filter(entry -> entry.getKey().equals("error"))
+                       .flatMap(entry -> ((Map<String, Object>) entry.getValue()).entrySet().stream())
+                       .filter(entry -> entry.getKey().equals("type"))
+                       .map(entry -> entry.getValue().equals("resource_already_exists_exception"))
+                       .findFirst()
+                       .orElse(false);
+
+                if (alreadyExists) {
+                    log.info("Creation of migration index with name [{}] failed because it already exists. Likely another process got ahead of this process. Ignoring exception.", MIGRATION_DOCUMENT_INDEX);
+                } else {
+                    throw e;
+                }
+            }
 
             log.info("Migration index with name [{}] created", MIGRATION_DOCUMENT_INDEX);
         } catch (Exception e) {
@@ -150,7 +169,7 @@ public class RestClientOperations implements Closeable {
 
             Request request = new Request(HTTP_METHOD_GET, String.format("%s/_search", MIGRATION_DOCUMENT_INDEX));
             request.setJsonEntity(String.format(
-                    MIGRATION_RECORD_SEARCH_QUERY_TEMPLATE,
+                    MIGRATION_RECORD_SEARCH_QUERY_TEMPLATE_FIND_ALL_BY_MIGRATION_KEY,
                     this.migrationKey));
 
             Response response = this.sendRequest(request);
@@ -171,6 +190,43 @@ public class RestClientOperations implements Closeable {
             return records;
         } catch (Exception e) {
             throw new IllegalStateException(String.format("Failed to get migration records for migration key [%s]", this.migrationKey), e);
+        }
+    }
+
+    public MigrationRecord getMigrationRecordForMigrationFile(final MigrationFile file, final String migrationKey) {
+        try {
+            log.info("Getting migration record for migration file named [{}] and migration key [{}]", file.getMetadata().getFilename(), migrationKey);
+
+            Request request = new Request(HTTP_METHOD_GET, String.format("%s/_search", MIGRATION_DOCUMENT_INDEX));
+            request.setJsonEntity(String.format(
+                    MIGRATION_RECORD_SEARCH_QUERY_TEMPLATE_FIND_ONE_BY_MIGRATION_KEY_AND_MIGRATION_FILENAME,
+                    this.migrationKey,
+                    file.getMetadata().getFilename()));
+
+            Response response = this.sendRequest(request);
+            Map<String, Object> content = this.mapper.readValue(response.getEntity().getContent(), new TypeReference<Map<String, Object>>() {});
+
+            List<MigrationRecord> records = content.entrySet().stream()
+                                                   .filter(entry -> entry.getKey().equals("hits"))
+                                                   .flatMap(entry -> ((Map<String, Object>) entry.getValue()).entrySet().stream())
+                                                   .filter(entry -> entry.getKey().equals("hits"))
+                                                   .flatMap(entry -> ((List<Map<String, Object>>) entry.getValue()).stream())
+                                                   .flatMap(item -> item.entrySet().stream())
+                                                   .filter(entry -> entry.getKey().equals("_source"))
+                                                   .map(entry -> (MigrationRecord) this.mapper.convertValue(entry.getValue(), new TypeReference<MigrationRecord>() {}))
+                                                   .collect(Collectors.toUnmodifiableList());
+
+            if (records.size() > 1) {
+                throw new IllegalStateException(String.format("found more than one migration record for migration file named [%s] and migration key [%s]", file.getMetadata().getFilename(), migrationKey));
+            } if (records.size() == 1) {
+                log.info("Found existing migration record for migration file named [{}] and migration key [{}]", file.getMetadata().getFilename(), migrationKey);
+                return records.get(0);
+            } else {
+                log.info("Did not find any existing migration record for migration file named [{}] and migration key [{}]", file.getMetadata().getFilename(), migrationKey);
+                return null;
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(String.format("Failed to get migration records for migration file named [%s] and migration key [%s]", file.getMetadata().getFilename(), migrationKey));
         }
     }
 
