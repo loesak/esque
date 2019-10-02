@@ -24,6 +24,7 @@ import java.beans.ConstructorProperties;
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -187,6 +188,7 @@ public class RestClientOperations implements Closeable {
                                                    .flatMap(item -> item.entrySet().stream())
                                                    .filter(entry -> entry.getKey().equals("_source"))
                                                    .map(entry -> (MigrationRecord) this.mapper.convertValue(entry.getValue(), new TypeReference<MigrationRecord>() {}))
+                                                   .sorted(Comparator.comparing(MigrationRecord::getOrder))
                                                    .collect(Collectors.toUnmodifiableList());
 
             log.info("Found [{}] migration records", records.size());
