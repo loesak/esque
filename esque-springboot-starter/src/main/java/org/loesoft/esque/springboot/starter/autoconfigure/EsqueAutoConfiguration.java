@@ -12,8 +12,8 @@ import org.loesoft.esque.core.Esque;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientAutoConfiguration;
-import org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientProperties;
+import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration;
+import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,16 +25,16 @@ import java.util.function.Supplier;
 @Configuration
 @ConditionalOnProperty(prefix = "esque", name = "enabled", matchIfMissing = true)
 @EnableConfigurationProperties(EsqueConfigurationProperties.class)
-@AutoConfigureAfter({ RestClientAutoConfiguration.class })
+@AutoConfigureAfter({ ElasticsearchRestClientAutoConfiguration.class })
 public class EsqueAutoConfiguration {
 
     private final EsqueConfigurationProperties esqueProperties;
-    private final RestClientProperties restClientProperties;
+    private final ElasticsearchRestClientProperties restClientProperties;
     private final RestClient elasticsearchRestClient;
 
     public EsqueAutoConfiguration(
             final EsqueConfigurationProperties esqueProperties,
-            final RestClientProperties restClientProperties,
+            final ElasticsearchRestClientProperties restClientProperties,
             final ObjectProvider<RestClient> elasticsearchRestClient) {
         this.esqueProperties = esqueProperties;
         this.restClientProperties = restClientProperties;
