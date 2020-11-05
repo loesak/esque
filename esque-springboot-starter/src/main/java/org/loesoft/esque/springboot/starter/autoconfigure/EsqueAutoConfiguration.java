@@ -11,6 +11,7 @@ import org.elasticsearch.client.RestClientBuilder;
 import org.loesoft.esque.core.Esque;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration;
 import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientProperties;
@@ -47,6 +48,7 @@ public class EsqueAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public EsqueInitializer esqueInitializer(final Esque esque) {
         return new EsqueInitializer(esque);
     }
