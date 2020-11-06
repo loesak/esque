@@ -53,10 +53,6 @@ TODO: deal with Elasticsearch security as well as AWS ES security
 # Examples
 TODO: create examples project
 
-# Integrations
-## Spring Boot
-esque-springboot is a Spring Boot starter that will auto configure the necessary components based on configuration and execute the migrations on application startup.
-
 # Future Features
 * may allow ability to define "undo" queries for each definition to allow for attempts to roll back in the face of partial failure
 * support other versions of Elasticsearch (5.6+ only) - may just ditch the elasticsearch rest client and move to straight HTTP queries...

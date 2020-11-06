@@ -17,10 +17,6 @@
         <module>esque-example-core-simple</module>
         <module>esque-example-core-es-auth</module>
         <module>esque-example-core-aws-auth</module>
-        <module>esque-example-springboot-simple</module>
-        <module>esque-example-springboot-es-auth</module>
-        <module>esque-example-springboot-aws-auth</module>
-        <module>esque-example-springboot-complex</module>
     </modules>
 
     <build>
