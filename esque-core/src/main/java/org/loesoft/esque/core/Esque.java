@@ -70,11 +70,7 @@ public class Esque implements Closeable {
 
             this.verifyStateIntegrity(files, history);
 
-            List<MigrationFile> remaining = files.subList(history.size(), files.size());
-
-            log.info("Running remaining [{}] migrations", remaining.size());
-
-            this.runMigrations(remaining);
+            this.runMigrations(files);
 
             log.info("Completed esque execution");
         } catch (Exception e) {
