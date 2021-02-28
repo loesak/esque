@@ -2,10 +2,26 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.loesoft.esque</groupId>
+    <groupId>org.loesak.esque</groupId>
     <artifactId>esque</artifactId>
     <version>0.0.11-SNAPSHOT</version>
     <packaging>pom</packaging>
+
+    <name>esque</name>
+    <description>Resembles an Elasticsearch Stateful Query Executor</description>
+    <url>https://github.com/loesak/esque</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/loesak/esque</url>
+    </scm>
 
     <modules>
         <module>esque-core</module>
@@ -38,14 +54,9 @@
 
     <distributionManagement>
         <repository>
-            <id>loesoft-releases</id>
-            <name>Loesoft Release Repository</name>
-            <url>https://nexus.loesoft.com/repository/maven-releases/</url>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/loesak/esque</url>
         </repository>
-        <snapshotRepository>
-            <id>loesoft-snapshots</id>
-            <name>Loesoft Snapshot Repository</name>
-            <url>https://nexus.loesoft.com/repository/maven-snapshots/</url>
-        </snapshotRepository>
     </distributionManagement>
 </project>
