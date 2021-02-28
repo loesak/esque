@@ -1,7 +1,5 @@
 name: Maven Package (a.k.a. build & test)
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
 jobs:
