@@ -1,13 +1,13 @@
-package org.loesoft.esque.core;
+package org.loesak.esque.core;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.RestClient;
-import org.loesoft.esque.core.concurrent.ElasticsearchDocumentLock;
-import org.loesoft.esque.core.elasticsearch.RestClientOperations;
-import org.loesoft.esque.core.elasticsearch.documents.MigrationRecord;
-import org.loesoft.esque.core.yaml.MigrationFileLoader;
-import org.loesoft.esque.core.yaml.model.MigrationFile;
+import org.loesak.esque.core.concurrent.ElasticsearchDocumentLock;
+import org.loesak.esque.core.elasticsearch.documents.MigrationRecord;
+import org.loesak.esque.core.yaml.MigrationFileLoader;
+import org.loesak.esque.core.elasticsearch.RestClientOperations;
+import org.loesak.esque.core.yaml.model.MigrationFile;
 
 import java.io.Closeable;
 import java.io.IOException;

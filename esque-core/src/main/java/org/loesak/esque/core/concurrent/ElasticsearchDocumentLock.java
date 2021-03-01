@@ -1,7 +1,7 @@
-package org.loesoft.esque.core.concurrent;
+package org.loesak.esque.core.concurrent;
 
 import lombok.extern.slf4j.Slf4j;
-import org.loesoft.esque.core.elasticsearch.RestClientOperations;
+import org.loesak.esque.core.elasticsearch.RestClientOperations;
 
 import java.beans.ConstructorProperties;
 import java.time.Duration;
