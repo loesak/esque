@@ -1,4 +1,4 @@
-package org.loesoft.esque.core.elasticsearch.documents;
+package org.loesak.esque.core.elasticsearch.documents;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeName;

@@ -1,4 +1,4 @@
-package org.loesoft.esque.core.elasticsearch;
+package org.loesak.esque.core.elasticsearch;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -16,9 +16,9 @@ import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
-import org.loesoft.esque.core.elasticsearch.documents.MigrationLock;
-import org.loesoft.esque.core.elasticsearch.documents.MigrationRecord;
-import org.loesoft.esque.core.yaml.model.MigrationFile;
+import org.loesak.esque.core.elasticsearch.documents.MigrationLock;
+import org.loesak.esque.core.elasticsearch.documents.MigrationRecord;
+import org.loesak.esque.core.yaml.model.MigrationFile;
 
 import java.beans.ConstructorProperties;
 import java.io.Closeable;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 public class RestClientOperations implements Closeable {
 
     private static final String MIGRATION_DOCUMENT_INDEX = "/.esque";
-    private static final String MIGRATION_DOCUMENT_INDEX_DEFINITION_FILE_PATH = "org/loesoft/esque/core/elasticsearch/esque-index-defintion.json";
+    private static final String MIGRATION_DOCUMENT_INDEX_DEFINITION_FILE_PATH = "org/loesak/esque/core/elasticsearch/esque-index-defintion.json";
     private static final String MIGRATION_LOCK_DOCUMENT_ID_PREFIX = "lock";
     private static final String MIGRATION_RECORD_SEARCH_QUERY_TEMPLATE_FIND_ALL_BY_MIGRATION_KEY = "{\"query\":{\"bool\":{\"filter\":[{\"term\":{\"migration.migrationKey\":\"%s\"}}]}}}";
     private static final String MIGRATION_RECORD_SEARCH_QUERY_TEMPLATE_FIND_ONE_BY_MIGRATION_KEY_AND_MIGRATION_FILENAME = "{\"query\":{\"bool\":{\"filter\":[{\"term\":{\"migration.migrationKey\":\"%s\"}},{\"term\":{\"migration.filename\":\"%s\"}}]}}}";

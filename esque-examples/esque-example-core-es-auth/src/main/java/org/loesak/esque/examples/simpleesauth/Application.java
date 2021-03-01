@@ -1,4 +1,4 @@
-package org.loesoft.esque.examples.simpleesauth;
+package org.loesak.esque.examples.simpleesauth;
 
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -8,7 +8,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
-import org.loesoft.esque.core.Esque;
+import org.loesak.esque.core.Esque;
 
 public class Application {
 

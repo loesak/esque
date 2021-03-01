@@ -1,4 +1,4 @@
-package org.loesoft.esque.core.yaml.model;
+package org.loesak.esque.core.yaml.model;
 
 import lombok.NonNull;
 import lombok.Value;

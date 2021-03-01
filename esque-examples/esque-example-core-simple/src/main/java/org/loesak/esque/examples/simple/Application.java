@@ -1,8 +1,8 @@
-package org.loesoft.esque.examples.simple;
+package org.loesak.esque.examples.simple;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
-import org.loesoft.esque.core.Esque;
+import org.loesak.esque.core.Esque;
 
 public class Application {
 

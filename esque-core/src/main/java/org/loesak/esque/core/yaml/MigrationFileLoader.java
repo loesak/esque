@@ -1,9 +1,9 @@
-package org.loesoft.esque.core.yaml;
+package org.loesak.esque.core.yaml;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.loesoft.esque.core.yaml.model.MigrationFile;
+import org.loesak.esque.core.yaml.model.MigrationFile;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
