@@ -15,7 +15,5 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - run: |
-          export VERSION=$(git describe --tags --dirty)
-          mvn versions:set -DnewVersion=${VERSION}
-          mvn -B clean package verify
+      - run: mvn versions:set -DnewVersion=$(git describe --tags --dirty)
+      - run: mvn -B clean package verify
