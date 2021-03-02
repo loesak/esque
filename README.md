@@ -51,7 +51,7 @@ It basically executes queries and remembers which queries have been run on a clu
 TODO: deal with Elasticsearch security as well as AWS ES security
 
 # Examples
-TODO: create examples project
+Example projects exist in the `esque-examples` subdirectory 
 
 # Future Features
 * may allow ability to define "undo" queries for each definition to allow for attempts to roll back in the face of partial failure
