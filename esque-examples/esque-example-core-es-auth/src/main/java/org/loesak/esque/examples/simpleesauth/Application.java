@@ -24,12 +24,8 @@ public class Application {
 
         RestClientBuilder builder = RestClient
                 .builder(new HttpHost("localhost", 9200, "http"))
-                .setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
-                    @Override
-                    public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
-                        return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-                    }
-                });
+                .setHttpClientConfigCallback(httpClientBuilder ->
+                        httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
 
         try(Esque esque = new Esque(builder.build(), migrationKey, migrationUser)) {
             esque.execute();
