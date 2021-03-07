@@ -22,11 +22,11 @@ jobs:
           server-password: GITHUB_TOKEN
           gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           gpg-passphrase: OSSRH_GPG_SECRET_KEY_PASSWORD
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
+#      - uses: actions/cache@v2
+#        with:
+#          path: ~/.m2
+#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+#          restore-keys: ${{ runner.os }}-m2
       - run: env
       - run: cat $HOME/.m2/settings.xml
       - run: mvn -B -ntp versions:set -DnewVersion=$(git describe --tags --dirty)
