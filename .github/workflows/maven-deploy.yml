@@ -10,18 +10,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-#      - run: cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --import
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
       - uses: actions/setup-java@v1
         with:
           java-version: 11
-          server-id: maven
-          server-username: GITHUB_ACTOR
-          server-password: GITHUB_TOKEN
-          gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
-          gpg-passphrase: OSSRH_GPG_SECRET_KEY_PASSWORD
+#          gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
+#          gpg-passphrase: OSSRH_GPG_SECRET_KEY_PASSWORD
 #      - uses: actions/cache@v2
 #        with:
 #          path: ~/.m2
@@ -34,4 +30,4 @@ jobs:
       - run: mvn -B -ntp clean verify
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          OSSRH_GPG_SECRET_KEY_PASSWORD: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+#          OSSRH_GPG_SECRET_KEY_PASSWORD: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
