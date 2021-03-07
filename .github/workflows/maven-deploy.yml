@@ -12,6 +12,7 @@ jobs:
     steps:
       - run: |
           which gpg
+          gpg --version
           cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --import
           gpg --list-secret-keys --keyid-format LONG
       - uses: actions/checkout@v2
