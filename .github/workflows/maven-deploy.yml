@@ -18,8 +18,9 @@ jobs:
           java-version: 11
           gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           gpg-passphrase: OSSRH_GPG_SECRET_KEY_PASSWORD
-      - run: mvn -B -ntp versions:set -DnewVersion=$(git describe --tags --dirty)
-      - run: mvn -B -ntp clean deploy
+      - run: mvn -B -ntp versions:set -DnewVersion=$(./version.sh)
+#      - run: mvn -B -ntp clean deploy
+      - run: mvn -B -ntp clean verify
         env:
           GITHUB_TOKEN: ${{ github.token }}
           OSSRH_GPG_SECRET_KEY_PASSWORD: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
