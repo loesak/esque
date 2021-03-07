@@ -10,7 +10,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - run: env
       - run: cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --import
       - uses: actions/checkout@v2
         with:
@@ -25,6 +24,7 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
+      - run: env
       - run: mvn -B -ntp versions:set -DnewVersion=$(git describe --tags --dirty)
       - run: mvn -B -ntp -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }} clean deploy -s $GITHUB_WORKSPACE/settings.xml
         env:
