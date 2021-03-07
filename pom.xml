@@ -19,7 +19,18 @@
         </license>
     </licenses>
 
+    <developers>
+        <developer>
+            <name>Aaron Loes</name>
+            <email>aaron.loes@gmail.com</email>
+            <organization>Loesak</organization>
+            <organizationUrl>https://github.com/loesak/esque</organizationUrl>
+        </developer>
+    </developers>
+
     <scm>
+        <connection>scm:git:git://github.com/loesak/esque.git</connection>
+        <developerConnection>scm:git:ssh://github.com:loesak/esque.git</developerConnection>
         <url>https://github.com/loesak/esque</url>
     </scm>
 
@@ -49,6 +60,43 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.sonatype.plugins</groupId>-->
+<!--                <artifactId>nexus-staging-maven-plugin</artifactId>-->
+<!--                <version>1.6.8</version>-->
+<!--                <extensions>true</extensions>-->
+<!--                <configuration>-->
+<!--                    <serverId>ossrh</serverId>-->
+<!--                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>-->
+<!--                    <autoReleaseAfterClose>true</autoReleaseAfterClose>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
         </plugins>
     </build>
 
