@@ -17,6 +17,9 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: 11
+          server-id: maven
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
           gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           gpg-passphrase: OSSRH_GPG_SECRET_KEY_PASSWORD
       - uses: actions/cache@v2
