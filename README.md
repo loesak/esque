@@ -47,6 +47,16 @@ It is Flyway-esque but for Elasticsearch.
     
 It basically executes queries and remembers which queries have been run on a cluster for a given migration key. You can organize it's usage to your needs.
 
+# Install
+Add the following to your maven dependencies. Make sure to check the releases or Maven Central for the latest version.
+```xml
+<dependency>
+  <groupId>org.loesak.esque</groupId>
+  <artifactId>esque-core</artifactId>
+  <version>0.1.2</version>
+</dependency>
+```
+
 # Security
 TODO: deal with Elasticsearch security as well as AWS ES security
 
