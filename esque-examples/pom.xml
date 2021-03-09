@@ -44,6 +44,8 @@
                 <version>1.6.8</version>
                 <configuration>
                     <skipStaging>true</skipStaging>
+                    <skipLocalStaging>true</skipLocalStaging>
+                    <skipRemoteStaging>true</skipRemoteStaging>
                 </configuration>
             </plugin>
         </plugins>
