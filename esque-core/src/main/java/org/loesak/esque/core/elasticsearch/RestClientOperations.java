@@ -224,7 +224,7 @@ public class RestClientOperations implements Closeable {
 
             if (records.size() > 1) {
                 throw new IllegalStateException(String.format("found more than one migration record for migration file named [%s] and migration key [%s]", file.getMetadata().getFilename(), migrationKey));
-            } if (records.size() == 1) {
+            } else if (records.size() == 1) {
                 log.info("Found existing migration record for migration file named [{}] and migration key [{}]", file.getMetadata().getFilename(), migrationKey);
                 return records.get(0);
             } else {
