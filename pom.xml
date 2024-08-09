@@ -80,10 +80,11 @@
                 <version>3.2.4</version>
                 <configuration>
                     <bestPractices>true</bestPractices>
-                    <gpgArguments>
-                        <arg>--pinentry-mode</arg>
-                        <arg>loopback</arg>
-                    </gpgArguments>
+                    <passphraseEnvName>OSSRH_GPG_SECRET_KEY_PASSWORD</passphraseEnvName>
+<!--                    <gpgArguments>-->
+<!--                        <arg>&#45;&#45;pinentry-mode</arg>-->
+<!--                        <arg>loopback</arg>-->
+<!--                    </gpgArguments>-->
                 </configuration>
                 <executions>
                     <execution>
