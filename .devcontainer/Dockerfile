@@ -9,7 +9,7 @@ SHELL ["/bin/bash", "-c"]
 RUN DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt install -y \
-      curl git zip unzip
+      curl git zip unzip gnupg
 
 ARG USER=ubuntu
 ARG HOME="/home/${USER}"
