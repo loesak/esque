@@ -81,10 +81,6 @@
                 <configuration>
                     <bestPractices>true</bestPractices>
                     <passphraseEnvName>OSSRH_GPG_SECRET_KEY_PASSWORD</passphraseEnvName>
-<!--                    <gpgArguments>-->
-<!--                        <arg>&#45;&#45;pinentry-mode</arg>-->
-<!--                        <arg>loopback</arg>-->
-<!--                    </gpgArguments>-->
                 </configuration>
                 <executions>
                     <execution>
