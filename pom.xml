@@ -80,6 +80,7 @@
                 <version>3.2.4</version>
                 <configuration>
                     <bestPractices>true</bestPractices>
+                    <useAgent>false</useAgent>
 <!--                    <gpgArguments>-->
 <!--                        <arg>&#45;&#45;pinentry-mode</arg>-->
 <!--                        <arg>loopback</arg>-->
