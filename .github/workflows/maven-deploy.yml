@@ -24,7 +24,6 @@ jobs:
           # this sets the wrong variable in settings.xml needed for maven-gpg-plugin since 3.x.x
           # instead you need to set passphraseEnvName in your pom.xml for now
           # gpg-passphrase: OSSRH_GPG_SECRET_KEY_PASSWORD
-          gpg-passphrase: MAVEN_GPG_PASSPHRASE
       - run: cat ~/.m2/settings.xml
       # helps identify build failures due to expired keys
       - run: gpg --list-secret-keys --keyid-format=long
