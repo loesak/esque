@@ -14,7 +14,6 @@
     <dependencies>
         <dependency>
             <!-- todo build two versions. one for 7.x and one for 8.x -->
-            <!-- todo: rest client is deprecated -->
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-client</artifactId>
             <version>7.17.23</version>
