@@ -1,0 +1,10 @@
+{
+  "name": "esque",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devenv",
+  "workspaceFolder": "/workspaces/esque",
+
+  "postAttachCommand": {
+    "all-maven-install": "find . -type f -name \"pom.xml\" -execdir mvn dependency:resolve \\;",
+  }
+}

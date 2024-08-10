@@ -1,0 +1,15 @@
+name: esque
+services:
+  devenv:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: esque-devenv
+    volumes:
+      - jbdevcontainer:/.jbdevcontainer
+      - ${HOME}/.ssh:/home/ubuntu/.ssh
+      - ${HOME}/.gitconfig:/home/ubuntu/.gitconfig
+    command: sleep infinity
+
+volumes:
+  jbdevcontainer:

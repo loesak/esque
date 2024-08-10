@@ -10,20 +10,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-java@v4
         with:
+          distribution: 'zulu'
           java-version: 11
           server-id: ossrh
           server-username: OSSRH_USERNAME
           server-password: OSSRH_PASSWORD
           gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
-          gpg-passphrase: OSSRH_GPG_SECRET_KEY_PASSWORD
+      # helps identify build failures due to expired keys
+      - run: gpg --list-secret-keys --keyid-format=long
       - run: mvn -B -ntp versions:set -DnewVersion=$(./version.sh)
       - run: mvn -B -ntp clean deploy
         env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          OSSRH_GPG_SECRET_KEY_PASSWORD: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+          # this env var needs to be named 'MAVEN_GPG_PASSPHRASE'. if a different name is desired,
+          # it needs to be specified here and in the maven-gpg-plugin configuration variable 'passphraseEnvName'
+          # see issue: https://github.com/actions/setup-java/issues/668
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}

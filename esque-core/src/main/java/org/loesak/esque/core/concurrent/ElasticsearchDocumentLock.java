@@ -11,7 +11,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /*
- * Modeled after the Spring Lock implmentations for JDBC (mostly), Zookeeper, and Redis found here:
+ * Modeled after the Spring Lock implementation for JDBC (mostly), Zookeeper, and Redis found here:
  * https://github.com/spring-projects/spring-integration/blob/master/spring-integration-jdbc/src/main/java/org/springframework/integration/jdbc/lock/JdbcLockRegistry.java#L102
  * https://github.com/spring-projects/spring-integration/blob/master/spring-integration-zookeeper/src/main/java/org/springframework/integration/zookeeper/lock/ZookeeperLockRegistry.java#L216
  * https://github.com/spring-projects/spring-integration/blob/master/spring-integration-redis/src/main/java/org/springframework/integration/redis/util/RedisLockRegistry.java#L181
