@@ -53,7 +53,7 @@ Add the following to your maven dependencies. Make sure to check the releases or
 <dependency>
   <groupId>org.loesak.esque</groupId>
   <artifactId>esque-core</artifactId>
-  <version>0.1.2</version>
+  <version>0.1.3</version>
 </dependency>
 ```
 
