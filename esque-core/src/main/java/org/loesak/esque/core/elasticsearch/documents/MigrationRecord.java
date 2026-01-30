@@ -2,32 +2,32 @@ package org.loesak.esque.core.elasticsearch.documents;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import lombok.NonNull;
-import lombok.Value;
 
 import java.time.Instant;
+import java.util.Objects;
 
-@Value
 @JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.NAME)
 @JsonTypeName(value = "migration")
-public class MigrationRecord {
+public record MigrationRecord(
+        String migrationKey,
+        Integer order,
+        String filename,
+        String version,
+        String description,
+        Integer checksum,
+        String installedBy, // user if any
+        Instant installedOn,
+        Long executionTime) {
 
-    @NonNull String migrationKey;
-
-    @NonNull Integer order;
-
-    @NonNull String filename;
-
-    @NonNull String version;
-
-    @NonNull String description;
-
-    @NonNull Integer checksum;
-
-    String installedBy; // user if any
-
-    @NonNull Instant installedOn;
-
-    @NonNull Long executionTime;
+    public MigrationRecord {
+        Objects.requireNonNull(migrationKey);
+        Objects.requireNonNull(order);
+        Objects.requireNonNull(filename);
+        Objects.requireNonNull(version);
+        Objects.requireNonNull(description);
+        Objects.requireNonNull(checksum);
+        Objects.requireNonNull(installedOn);
+        Objects.requireNonNull(executionTime);
+    }
 
 }

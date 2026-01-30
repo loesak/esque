@@ -5,9 +5,9 @@
 **Esque** (**E**lasticsearch **S**tateful **Qu**ery **E**xecutor) is a migration management library for Elasticsearch, similar to Flyway but for ES clusters. It executes pre-defined queries in order, tracks which have been applied, validates integrity, and supports distributed locking for safe concurrent execution.
 
 - **License:** Apache 2.0
-- **Language:** Java 11
+- **Language:** Java 21
 - **Build:** Maven 3.9+
-- **Target:** Elasticsearch 7+ (client version 7.17.x)
+- **Target:** Elasticsearch 7+ / 8+ (client version 8.17.x low-level REST client)
 - **Published to:** Maven Central via OSSRH
 
 ## Repository Structure
@@ -18,7 +18,7 @@ esque/
 ├── version.sh                       # Git-tag-based version calculation
 ├── .github/workflows/
 │   └── maven-deploy.yml             # CI/CD: build + deploy to Maven Central
-├── .devcontainer/                   # Dev container (Ubuntu, Zulu JDK 11, Maven 3.9)
+├── .devcontainer/                   # Dev container (Ubuntu, Zulu JDK 21, Maven 3.9)
 ├── esque-core/                      # Core library (the published artifact)
 │   ├── pom.xml
 │   └── src/main/java/org/loesak/esque/core/
@@ -45,7 +45,7 @@ esque/
 
 ### Prerequisites
 
-- Java 11 (Zulu distribution recommended)
+- Java 21 (Zulu distribution recommended)
 - Maven 3.9+
 
 ### Common Commands
@@ -83,7 +83,7 @@ GitHub Actions workflow (`.github/workflows/maven-deploy.yml`) triggers on:
 - Pull requests to `master`
 - GitHub releases (published)
 
-It builds with Java 11 (Zulu) and deploys to OSSRH (Maven Central staging).
+It builds with Java 21 (Zulu) and deploys to OSSRH (Maven Central staging).
 
 ## Architecture
 
@@ -108,10 +108,10 @@ It builds with Java 11 (Zulu) and deploys to OSSRH (Maven Central staging).
 | `Esque` | Main orchestrator - coordinates the full migration lifecycle |
 | `RestClientOperations` | ES REST client abstraction for all index/document operations |
 | `MigrationFileLoader` | Discovers and parses YAML files from classpath |
-| `MigrationFile` | Domain model for migration files with version-based ordering |
+| `MigrationFile` | Domain model (Java record) for migration files with version-based ordering |
 | `ElasticsearchDocumentLock` | Distributed lock using ES `op_type=create` for atomicity |
-| `MigrationRecord` | Domain model for applied migration history records |
-| `MigrationLock` | Domain model for lock documents |
+| `MigrationRecord` | Domain model (Java record) for applied migration history records |
+| `MigrationLock` | Domain model (Java record) for lock documents |
 
 ### Distributed Locking
 
@@ -178,21 +178,21 @@ Integrity is verified by matching file checksums (MD5) against stored records.
 
 ### Patterns and Libraries
 
-- **Lombok**: Used extensively throughout
-  - `@Value` for immutable data classes (all domain models)
+- **Java Records**: Used for all immutable domain models (`MigrationRecord`, `MigrationLock`, `MigrationFile` and its nested types). Null validation via `Objects.requireNonNull` in compact constructors.
+- **Lombok**: Used for cross-cutting concerns
   - `@Slf4j` for logging
-  - `@NonNull` for null validation
-- **Jackson**: Full suite for JSON and YAML serialization
+  - `@NonNull` for null validation on non-record constructors (e.g., `Esque`)
+- **Jackson**: Full suite for JSON and YAML serialization, versions managed via `jackson-bom`
   - `@JsonTypeInfo` / `@JsonTypeName` for type-wrapped serialization on document models
-  - `@ConstructorProperties` for deserialization hints
+  - Native record deserialization support (Jackson 2.18+)
 - **Java Streams**: Preferred for collection transformations (filter-map-collect)
-- **Immutable collections**: `Collectors.toUnmodifiableList()` used for result sets
+- **Immutable collections**: `Stream.toList()` used for result sets
 - **Resource management**: `Closeable` interface with try-with-resources
 - **Logging**: SLF4J via Lombok `@Slf4j`; info for flow, debug for request/response detail, warn/error for failures
 
 ### Design Principles
 
-- Domain models are immutable (`@Value`)
+- Domain models are immutable (Java records)
 - All ES operations are centralized in `RestClientOperations`
 - Migration ordering is deterministic via `Comparable<MigrationFile>` (version parts, then lexical)
 - Exceptions wrap lower-level errors with context messages using `String.format`
@@ -210,8 +210,7 @@ There are no unit tests in the codebase. Integration testing is done via the exa
 
 ## Known TODOs in Code
 
-- Build separate artifact versions for ES 7.x and 8.x (`esque-core/pom.xml`)
-- Differentiate lock creation failure vs. lock-already-exists (`RestClientOperations:126`)
+- Differentiate lock creation failure vs. lock-already-exists (`RestClientOperations:122`)
 - Configurable lock timeout for long-running queries (`Esque.java:162`)
 - Consider writing "FAILED" migration records (`Esque.java:169`)
 - Rollback/undo capability (mentioned in README)

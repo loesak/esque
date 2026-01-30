@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class MigrationFileLoader {
@@ -44,7 +43,7 @@ public class MigrationFileLoader {
                 .filter(path -> path.toFile().getName().matches(MIGRATION_DEFINITION_FILE_NAME_REGEX))
                 .map(MigrationFileLoader::read)
                 .sorted()
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
 
         log.info("Found [{}] migration files", files.size());
 

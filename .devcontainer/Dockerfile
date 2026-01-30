@@ -1,7 +1,7 @@
 FROM ubuntu:noble
 
-ARG JAVA_VERSION=11.0.23-zulu
-ARG MAVEN_VERSION=3.9.8
+ARG JAVA_VERSION=21.0.5-zulu
+ARG MAVEN_VERSION=3.9.9
 
 SHELL ["/bin/bash", "-c"]
 
