@@ -3,7 +3,6 @@ package org.loesak.esque.core.concurrent;
 import lombok.extern.slf4j.Slf4j;
 import org.loesak.esque.core.elasticsearch.RestClientOperations;
 
-import java.beans.ConstructorProperties;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -26,12 +25,10 @@ public class ElasticsearchDocumentLock implements Lock {
     private final RestClientOperations operations;
     private final Duration idleBetweenTries;
 
-    @ConstructorProperties({"operations"})
     public ElasticsearchDocumentLock(final RestClientOperations operations) {
         this(operations, DEFAULT_IDLE_BETWEEN_TRIES);
     }
 
-    @ConstructorProperties({"operations", "idleBetweenTries"})
     public ElasticsearchDocumentLock(RestClientOperations operations, Duration idleBetweenTries) {
         this.operations = operations;
         this.idleBetweenTries = idleBetweenTries;

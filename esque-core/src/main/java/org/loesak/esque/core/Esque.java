@@ -95,26 +95,26 @@ public class Esque implements Closeable {
             }
 
             // a migration record was deleted from the index?
-            if (history.size() > 0 && history.size() != history.get(history.size() - 1).getOrder() + 1) {
+            if (!history.isEmpty() && history.size() != history.get(history.size() - 1).order() + 1) {
                 throw new IllegalStateException("the migration records seem to be corrupt as some records appear to be missing.");
             }
 
             // each migration record should match the information about the file that generated it. meaning the file wasnt modified
             history.forEach(record -> {
                 final MigrationFile companion = files.stream()
-                                                     .filter(file -> file.getMetadata().getFilename().equals(record.getFilename()))
+                                                     .filter(file -> file.metadata().filename().equals(record.filename()))
                                                      .findFirst()
                                                      .orElseThrow(() -> new IllegalStateException(
                                                              String.format(
                                                                      "could not find migration file matching migration history record by filename [%s]",
-                                                                     record.getFilename())));
+                                                                     record.filename())));
 
-                if (record.getOrder() != files.indexOf(companion)
-                        || !record.getVersion().equals(companion.getMetadata().getVersion())
-                        || !record.getDescription().equals(companion.getMetadata().getDescription())
-                        || !record.getChecksum().equals(companion.getMetadata().getChecksum())
-                        || !record.getMigrationKey().equals(this.migrationKey)) {
-                    throw new IllegalStateException(String.format("could not verify integrity of migration history record for filename [%s]. did you refactor your migration scripts after a previous execution?", record.getFilename()));
+                if (record.order() != files.indexOf(companion)
+                        || !record.version().equals(companion.metadata().version())
+                        || !record.description().equals(companion.metadata().description())
+                        || !record.checksum().equals(companion.metadata().checksum())
+                        || !record.migrationKey().equals(this.migrationKey)) {
+                    throw new IllegalStateException(String.format("could not verify integrity of migration history record for filename [%s]. did you refactor your migration scripts after a previous execution?", record.filename()));
                 }
             });
 
@@ -131,11 +131,11 @@ public class Esque implements Closeable {
                     log.info("Attempting to acquire lock for execution");
 
                     if (this.lock.tryLock(5, TimeUnit.MINUTES)) {
-                        log.info("Lock acquired. Executing queries defined in migration file [{}]", file.getMetadata().getFilename());
+                        log.info("Lock acquired. Executing queries defined in migration file [{}]", file.metadata().filename());
 
                         // check to see if migration has already ran. entirely possible in a distributed system
                         if (this.operations.getMigrationRecordForMigrationFile(file, this.migrationKey) != null) {
-                            log.info("Migration for migration file [{}] and migration key [{}] appears to already have been executed. Skipping", file.getMetadata().getFilename(), this.migrationKey);
+                            log.info("Migration for migration file [{}] and migration key [{}] appears to already have been executed. Skipping", file.metadata().filename(), this.migrationKey);
                         } else {
                             final Instant start = Instant.now();
                             this.runMigrationForFile(file);
@@ -143,15 +143,15 @@ public class Esque implements Closeable {
 
                             final Long duration = Duration.between(start, end).toMillis();
 
-                            log.info("Execution complete for migration file [{}]. Took [{}] milliseconds", file.getMetadata().getFilename(), duration);
+                            log.info("Execution complete for migration file [{}]. Took [{}] milliseconds", file.metadata().filename(), duration);
 
                             final MigrationRecord record = new MigrationRecord(
                                     this.migrationKey,
                                     files.indexOf(file),
-                                    file.getMetadata().getFilename(),
-                                    file.getMetadata().getVersion(),
-                                    file.getMetadata().getDescription(),
-                                    file.getMetadata().getChecksum(),
+                                    file.metadata().filename(),
+                                    file.metadata().version(),
+                                    file.metadata().description(),
+                                    file.metadata().checksum(),
                                     this.migrationUser,
                                     end,
                                     duration);
@@ -164,7 +164,7 @@ public class Esque implements Closeable {
                         throw new IllegalStateException("failed to acquire lock");
                     }
                 } catch (Exception e) {
-                    throw new RuntimeException(String.format("Failed to execute queries in migration file [%s]", file.getMetadata().getFilename()), e);
+                    throw new RuntimeException(String.format("Failed to execute queries in migration file [%s]", file.metadata().filename()), e);
 
                     // TODO: should we write a "FAILED" migration record?
                 } finally {
@@ -178,30 +178,30 @@ public class Esque implements Closeable {
     }
 
     private void runMigrationForFile(final MigrationFile file) {
-        log.info("Executing queries defined in migration file [{}]", file.getMetadata().getFilename());
+        log.info("Executing queries defined in migration file [{}]", file.metadata().filename());
 
-        List<MigrationFile.MigrationFileRequestDefinition> requests = file.getContents().getRequests();
+        List<MigrationFile.MigrationFileRequestDefinition> requests = file.contents().requests();
         for (MigrationFile.MigrationFileRequestDefinition definition : requests) {
             final Integer position = requests.indexOf(definition);
 
             try {
-                log.info("Executing query in position [{}] defined in migration file [{}]", position, file.getMetadata().getFilename());
+                log.info("Executing query in position [{}] defined in migration file [{}]", position, file.metadata().filename());
 
                 this.operations.executeMigrationDefinition(definition);
 
-                log.info("Query in position [{}] defined in migration file [{}] executed successfully", position, file.getMetadata().getFilename());
+                log.info("Query in position [{}] defined in migration file [{}] executed successfully", position, file.metadata().filename());
             } catch (Exception e) {
                 throw new IllegalStateException(
                         String.format(
                                 "Failed to execute query in position [%d] defined in migration file [%s]",
                                 position,
-                                file.getMetadata().getFilename()),
+                                file.metadata().filename()),
                         e);
             }
 
         }
 
-        log.info("Execution complete for queries defined in migration file [{}]", file.getMetadata().getFilename());
+        log.info("Execution complete for queries defined in migration file [{}]", file.metadata().filename());
     }
 
 }

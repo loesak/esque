@@ -1,45 +1,55 @@
 package org.loesak.esque.core.yaml.model;
 
-import lombok.NonNull;
-import lombok.Value;
-
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-@Value
-public class MigrationFile implements Comparable<MigrationFile> {
+public record MigrationFile(
+        MigrationFileMetadata metadata,
+        MigrationFileContents contents) implements Comparable<MigrationFile> {
 
     private static final String MIGRATION_DEFINITION_FILE_VERSION_PARTS_DELIMITER_REGEX = "\\.";
 
-    @NonNull private final MigrationFileMetadata metadata;
-    @NonNull private final MigrationFileContents contents;
-
-    @Value
-    public static class MigrationFileMetadata {
-        @NonNull private final String filename;
-        @NonNull private final String version;
-        @NonNull private final String description;
-        @NonNull private final Integer checksum;
+    public MigrationFile {
+        Objects.requireNonNull(metadata);
+        Objects.requireNonNull(contents);
     }
 
-    @Value
-    public static class MigrationFileContents {
-        private List<MigrationFileRequestDefinition> requests;
+    public record MigrationFileMetadata(
+            String filename,
+            String version,
+            String description,
+            Integer checksum) {
+
+        public MigrationFileMetadata {
+            Objects.requireNonNull(filename);
+            Objects.requireNonNull(version);
+            Objects.requireNonNull(description);
+            Objects.requireNonNull(checksum);
+        }
     }
 
-    @Value
-    public static class MigrationFileRequestDefinition {
-        @NonNull private final String method;
-        @NonNull private final String path;
-        private final String contentType;
-        private final Map<String, String> params;
-        private final String body;
+    public record MigrationFileContents(
+            List<MigrationFileRequestDefinition> requests) {
+    }
+
+    public record MigrationFileRequestDefinition(
+            String method,
+            String path,
+            String contentType,
+            Map<String, String> params,
+            String body) {
+
+        public MigrationFileRequestDefinition {
+            Objects.requireNonNull(method);
+            Objects.requireNonNull(path);
+        }
     }
 
     @Override
     public int compareTo(MigrationFile that) {
-        final String[] thisVersionParts = this.getMetadata().getVersion().split(MIGRATION_DEFINITION_FILE_VERSION_PARTS_DELIMITER_REGEX);
-        final String[] thatVersionParts = that.getMetadata().getVersion().split(MIGRATION_DEFINITION_FILE_VERSION_PARTS_DELIMITER_REGEX);
+        final String[] thisVersionParts = this.metadata().version().split(MIGRATION_DEFINITION_FILE_VERSION_PARTS_DELIMITER_REGEX);
+        final String[] thatVersionParts = that.metadata().version().split(MIGRATION_DEFINITION_FILE_VERSION_PARTS_DELIMITER_REGEX);
 
         final int largestNumberOfParts = Math.max(thisVersionParts.length, thatVersionParts.length);
 
@@ -55,13 +65,13 @@ public class MigrationFile implements Comparable<MigrationFile> {
         }
 
         // if same, then lexically compare the version string
-        final int versionCompareResult = this.getMetadata().getVersion().compareTo(that.getMetadata().getVersion());
+        final int versionCompareResult = this.metadata().version().compareTo(that.metadata().version());
         if (versionCompareResult != 0) {
             return versionCompareResult;
         }
 
         // if still the same, then lexically compare the description
-        return this.getMetadata().getDescription().compareTo(that.getMetadata().getDescription());
+        return this.metadata().description().compareTo(that.metadata().description());
     }
 
 }

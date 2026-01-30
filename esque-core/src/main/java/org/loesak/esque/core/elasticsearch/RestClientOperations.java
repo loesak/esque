@@ -20,7 +20,6 @@ import org.loesak.esque.core.elasticsearch.documents.MigrationLock;
 import org.loesak.esque.core.elasticsearch.documents.MigrationRecord;
 import org.loesak.esque.core.yaml.model.MigrationFile;
 
-import java.beans.ConstructorProperties;
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Instant;
@@ -28,7 +27,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class RestClientOperations implements Closeable {
@@ -49,7 +47,6 @@ public class RestClientOperations implements Closeable {
     private final String migrationKey;
     private final ObjectMapper mapper;
 
-    @ConstructorProperties({"client", "migrationKey"})
     public RestClientOperations(final RestClient client, final String migrationKey) {
         this.client = client;
         this.migrationKey = migrationKey;
@@ -97,7 +94,7 @@ public class RestClientOperations implements Closeable {
             try {
                 this.sendRequest(request);
             } catch (ResponseException e) {
-                Map<String, Object> content = this.mapper.readValue(((ResponseException) e).getResponse().getEntity().getContent(), new TypeReference<Map<String,Object>>(){});
+                Map<String, Object> content = this.mapper.readValue(e.getResponse().getEntity().getContent(), new TypeReference<Map<String,Object>>(){});
                 Boolean alreadyExists = content.entrySet().stream()
                        .filter(entry -> entry.getKey().equals("error"))
                        .flatMap(entry -> ((Map<String, Object>) entry.getValue()).entrySet().stream())
@@ -188,8 +185,8 @@ public class RestClientOperations implements Closeable {
                                                    .flatMap(item -> item.entrySet().stream())
                                                    .filter(entry -> entry.getKey().equals("_source"))
                                                    .map(entry -> (MigrationRecord) this.mapper.convertValue(entry.getValue(), new TypeReference<MigrationRecord>() {}))
-                                                   .sorted(Comparator.comparing(MigrationRecord::getOrder))
-                                                   .collect(Collectors.toUnmodifiableList());
+                                                   .sorted(Comparator.comparing(MigrationRecord::order))
+                                                   .toList();
 
             log.info("Found [{}] migration records", records.size());
 
@@ -201,13 +198,13 @@ public class RestClientOperations implements Closeable {
 
     public MigrationRecord getMigrationRecordForMigrationFile(final MigrationFile file, final String migrationKey) {
         try {
-            log.info("Getting migration record for migration file named [{}] and migration key [{}]", file.getMetadata().getFilename(), migrationKey);
+            log.info("Getting migration record for migration file named [{}] and migration key [{}]", file.metadata().filename(), migrationKey);
 
             Request request = new Request(HTTP_METHOD_GET, String.format("%s/_search", MIGRATION_DOCUMENT_INDEX));
             request.setJsonEntity(String.format(
                     MIGRATION_RECORD_SEARCH_QUERY_TEMPLATE_FIND_ONE_BY_MIGRATION_KEY_AND_MIGRATION_FILENAME,
                     this.migrationKey,
-                    file.getMetadata().getFilename()));
+                    file.metadata().filename()));
 
             Response response = this.sendRequest(request);
             Map<String, Object> content = this.mapper.readValue(response.getEntity().getContent(), new TypeReference<Map<String, Object>>() {});
@@ -220,19 +217,19 @@ public class RestClientOperations implements Closeable {
                                                    .flatMap(item -> item.entrySet().stream())
                                                    .filter(entry -> entry.getKey().equals("_source"))
                                                    .map(entry -> (MigrationRecord) this.mapper.convertValue(entry.getValue(), new TypeReference<MigrationRecord>() {}))
-                                                   .collect(Collectors.toUnmodifiableList());
+                                                   .toList();
 
             if (records.size() > 1) {
-                throw new IllegalStateException(String.format("found more than one migration record for migration file named [%s] and migration key [%s]", file.getMetadata().getFilename(), migrationKey));
+                throw new IllegalStateException(String.format("found more than one migration record for migration file named [%s] and migration key [%s]", file.metadata().filename(), migrationKey));
             } if (records.size() == 1) {
-                log.info("Found existing migration record for migration file named [{}] and migration key [{}]", file.getMetadata().getFilename(), migrationKey);
+                log.info("Found existing migration record for migration file named [{}] and migration key [{}]", file.metadata().filename(), migrationKey);
                 return records.get(0);
             } else {
-                log.info("Did not find any existing migration record for migration file named [{}] and migration key [{}]", file.getMetadata().getFilename(), migrationKey);
+                log.info("Did not find any existing migration record for migration file named [{}] and migration key [{}]", file.metadata().filename(), migrationKey);
                 return null;
             }
         } catch (Exception e) {
-            throw new IllegalStateException(String.format("Failed to get migration records for migration file named [%s] and migration key [%s]", file.getMetadata().getFilename(), migrationKey));
+            throw new IllegalStateException(String.format("Failed to get migration records for migration file named [%s] and migration key [%s]", file.metadata().filename(), migrationKey));
         }
     }
 
@@ -240,13 +237,13 @@ public class RestClientOperations implements Closeable {
         try {
             log.info("Executing migration query definition");
 
-            Request request = new Request(definition.getMethod(), definition.getPath());
-            if (definition.getParams() != null) {
-                definition.getParams().forEach(request::addParameter);
+            Request request = new Request(definition.method(), definition.path());
+            if (definition.params() != null) {
+                definition.params().forEach(request::addParameter);
             }
 
-            if (definition.getBody() != null && !definition.getBody().trim().equals("")) {
-                request.setEntity(new NStringEntity(definition.getBody(), ContentType.parse(definition.getContentType())));
+            if (definition.body() != null && !definition.body().trim().equals("")) {
+                request.setEntity(new NStringEntity(definition.body(), ContentType.parse(definition.contentType())));
             }
 
             this.sendRequest(request);
@@ -258,12 +255,12 @@ public class RestClientOperations implements Closeable {
     }
 
     public void createMigrationRecord(final MigrationRecord record) {
-        if (!record.getMigrationKey().equals(this.migrationKey)) {
+        if (!record.migrationKey().equals(this.migrationKey)) {
             throw new IllegalStateException("migration record migration key must match operational migration key");
         }
 
         try {
-            log.info("Creating migration record for migration definition file [{}]", record.getFilename());
+            log.info("Creating migration record for migration definition file [{}]", record.filename());
 
             Request request = new Request(
                     HTTP_METHOD_POST,
@@ -275,9 +272,9 @@ public class RestClientOperations implements Closeable {
 
             this.sendRequest(request);
 
-            log.info("Migration record for migration definition file [{}] created", record.getFilename());
+            log.info("Migration record for migration definition file [{}] created", record.filename());
         } catch (Exception e) {
-            throw new IllegalStateException(String.format("Failed to creat migration record for migration definition file [%s]", record.getFilename()), e);
+            throw new IllegalStateException(String.format("Failed to creat migration record for migration definition file [%s]", record.filename()), e);
         }
     }
 
