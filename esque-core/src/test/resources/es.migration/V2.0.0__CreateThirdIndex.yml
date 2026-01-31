@@ -1,0 +1,5 @@
+---
+requests:
+  - method: "PUT"
+    path: "/test-index-v3"
+    contentType: application/json; charset=utf-8
