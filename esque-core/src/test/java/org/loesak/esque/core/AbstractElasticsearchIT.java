@@ -42,6 +42,8 @@ public abstract class AbstractElasticsearchIT {
     }
 
     protected RestClient createRestClient() {
-        return RestClient.builder(HttpHost.create(ELASTICSEARCH.getHttpHostAddress())).build();
+        return RestClient.builder(
+                new HttpHost(ELASTICSEARCH.getHost(), ELASTICSEARCH.getFirstMappedPort(), "http")
+        ).build();
     }
 }

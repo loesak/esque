@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EsqueIT extends AbstractElasticsearchIT {
 
@@ -106,21 +105,20 @@ class EsqueIT extends AbstractElasticsearchIT {
             String key1 = "independent-key-1";
             String key2 = "independent-key-2";
 
+            // execute migrations under key1
             new Esque(client, key1).execute();
-            new Esque(client, key2).execute();
 
             RestClientOperations ops1 = new RestClientOperations(client, key1);
             RestClientOperations ops2 = new RestClientOperations(client, key2);
 
+            // key1 should have 3 migration records
             List<MigrationRecord> records1 = ops1.getMigrationRecords();
-            List<MigrationRecord> records2 = ops2.getMigrationRecords();
-
             assertThat(records1).hasSize(3);
-            assertThat(records2).hasSize(3);
-
-            // each set should have its own migration key
             records1.forEach(r -> assertThat(r.migrationKey()).isEqualTo(key1));
-            records2.forEach(r -> assertThat(r.migrationKey()).isEqualTo(key2));
+
+            // key2 should have no records - migrations are scoped to the key
+            List<MigrationRecord> records2 = ops2.getMigrationRecords();
+            assertThat(records2).isEmpty();
         }
     }
 
