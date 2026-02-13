@@ -17,7 +17,8 @@ public abstract class AbstractElasticsearchIT {
 
     static final ElasticsearchContainer ELASTICSEARCH =
             new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.17.0")
-                    .withEnv("xpack.security.enabled", "false");
+                    .withEnv("xpack.security.enabled", "false")
+                    .withEnv("action.destructive_requires_name", "false");
 
     static {
         ELASTICSEARCH.start();
