@@ -16,7 +16,7 @@ import java.io.IOException;
 public abstract class AbstractElasticsearchIT {
 
     static final ElasticsearchContainer ELASTICSEARCH =
-            new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.17.0")
+            new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:9.3.0")
                     .withEnv("xpack.security.enabled", "false")
                     .withEnv("action.destructive_requires_name", "false");
 
