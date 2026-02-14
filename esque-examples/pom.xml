@@ -55,6 +55,13 @@
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
+                <extensions>false</extensions>
+                <executions>
+                    <execution>
+                        <id>injected-central-publishing</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
                 <configuration>
                     <skipPublishing>true</skipPublishing>
                 </configuration>
