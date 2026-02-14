@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>esque-core</artifactId>
+    <name>${artifactId}</name>
 
     <dependencies>
         <dependency>
