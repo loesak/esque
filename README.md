@@ -19,7 +19,7 @@ It is Flyway-esque but for Elasticsearch.
 * Rollback in the face of failure. Back up your systems and test your migrations
 
 # Prerequisites
-* Elasticsearch 7+
+* Elasticsearch 9+
 
 # Dependencies
 * org.elasticsearch.client:elasticsearch-rest-client
@@ -45,7 +45,7 @@ It is Flyway-esque but for Elasticsearch.
     - index schema modification
     - etc.
     
-It basically executes queries and remembers which queries have been run on a cluster for a given migration key. You can organize it's usage to your needs.
+It basically executes queries and remembers which queries have been run on a cluster for a given migration key. You can organize its usage to your needs.
 
 # Install
 Add the following to your maven dependencies. Make sure to check the releases or Maven Central for the latest version.
@@ -53,16 +53,18 @@ Add the following to your maven dependencies. Make sure to check the releases or
 <dependency>
   <groupId>org.loesak.esque</groupId>
   <artifactId>esque-core</artifactId>
-  <version>0.1.3</version>
+  <version>0.1.4</version>
 </dependency>
 ```
 
-# Security
-TODO: deal with Elasticsearch security as well as AWS ES security
+# Cluster Authentication
+You provide the RestClient, so you configure it for whatever authentication mechanism is in place for your cluster.
 
 # Examples
 Example projects exist in the `esque-examples` subdirectory 
 
 # Future Features
 * may allow ability to define "undo" queries for each definition to allow for attempts to roll back in the face of partial failure
-* support other versions of Elasticsearch (5.6+ only) - may just ditch the elasticsearch rest client and move to straight HTTP queries...
+* may allow ability to define "always" queries that are executed every run
+* support multiple versions of Elasticsearch
+* migrate to the new Rest5Client and RestClient is now legacy.
