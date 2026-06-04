@@ -1,5 +1,7 @@
 package org.loesak.esque.core.yaml.model
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 data class MigrationFile(
     @get:JvmName("metadata") val metadata: MigrationFileMetadata,
     @get:JvmName("contents") val contents: MigrationFileContents,
@@ -13,15 +15,15 @@ data class MigrationFile(
     )
 
     data class MigrationFileContents(
-        @get:JvmName("requests") val requests: List<MigrationFileRequestDefinition>,
+        @get:JvmName("requests") @JsonProperty("requests") val requests: List<MigrationFileRequestDefinition>,
     )
 
     data class MigrationFileRequestDefinition(
-        @get:JvmName("method") val method: String,
-        @get:JvmName("path") val path: String,
-        @get:JvmName("contentType") val contentType: String? = null,
-        @get:JvmName("params") val params: Map<String, String>? = null,
-        @get:JvmName("body") val body: String? = null,
+        @get:JvmName("method") @JsonProperty("method") val method: String,
+        @get:JvmName("path") @JsonProperty("path") val path: String,
+        @get:JvmName("contentType") @JsonProperty("contentType") val contentType: String? = null,
+        @get:JvmName("params") @JsonProperty("params") val params: Map<String, String>? = null,
+        @get:JvmName("body") @JsonProperty("body") val body: String? = null,
     )
 
     override fun compareTo(other: MigrationFile): Int {
