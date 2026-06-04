@@ -41,8 +41,4 @@ data class MigrationFile(
 
         return metadata.description.compareTo(other.metadata.description)
     }
-
-    companion object {
-        private const val VERSION_DELIMITER_REGEX = "\\."
-    }
 }
