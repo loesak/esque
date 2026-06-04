@@ -22,10 +22,10 @@ It is Flyway-esque but for Elasticsearch.
 * Elasticsearch 9+
 
 # Dependencies
+* org.jetbrains.kotlin:kotlin-stdlib
 * org.elasticsearch.client:elasticsearch-rest-client
 * com.fasterxml.jackson.core:jackson-databind
-* com.fasterxml.jackson.module:jackson-module-parameter-names
-* com.fasterxml.jackson.datatype:jackson-datatype-jdk8
+* com.fasterxml.jackson.module:jackson-module-kotlin
 * com.fasterxml.jackson.datatype:jackson-datatype-jsr310
 * com.fasterxml.jackson.dataformat:jackson-dataformat-yaml
 * org.slf4j:slf4j-api
