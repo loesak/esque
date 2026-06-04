@@ -2,6 +2,7 @@ package org.loesak.esque.core.yaml
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.loesak.esque.core.yaml.model.MigrationFile
 import java.nio.ByteBuffer
@@ -35,7 +36,7 @@ class MigrationFileLoader {
         private const val MIGRATION_DEFINITION_FILE_NAME_REGEX = "^V((\\d+\\.?)+)__(\\w+)\\.yml$"
         private val FILE_NAME_PATTERN = Regex(MIGRATION_DEFINITION_FILE_NAME_REGEX)
 
-        private val YAML_MAPPER = ObjectMapper(YAMLFactory())
+        private val YAML_MAPPER = ObjectMapper(YAMLFactory()).registerModule(KotlinModule.Builder().build())
         private val MESSAGE_DIGEST: MessageDigest = MessageDigest.getInstance("MD5")
 
         private fun read(path: Path): MigrationFile {
