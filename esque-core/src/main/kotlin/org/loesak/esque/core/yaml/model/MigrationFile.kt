@@ -1,27 +1,27 @@
 package org.loesak.esque.core.yaml.model
 
 data class MigrationFile(
-    val metadata: MigrationFileMetadata,
-    val contents: MigrationFileContents,
+    @get:JvmName("metadata") val metadata: MigrationFileMetadata,
+    @get:JvmName("contents") val contents: MigrationFileContents,
 ) : Comparable<MigrationFile> {
 
     data class MigrationFileMetadata(
-        val filename: String,
-        val version: String,
-        val description: String,
-        val checksum: Int,
+        @get:JvmName("filename") val filename: String,
+        @get:JvmName("version") val version: String,
+        @get:JvmName("description") val description: String,
+        @get:JvmName("checksum") val checksum: Int,
     )
 
     data class MigrationFileContents(
-        val requests: List<MigrationFileRequestDefinition>,
+        @get:JvmName("requests") val requests: List<MigrationFileRequestDefinition>,
     )
 
     data class MigrationFileRequestDefinition(
-        val method: String,
-        val path: String,
-        val contentType: String? = null,
-        val params: Map<String, String>? = null,
-        val body: String? = null,
+        @get:JvmName("method") val method: String,
+        @get:JvmName("path") val path: String,
+        @get:JvmName("contentType") val contentType: String? = null,
+        @get:JvmName("params") val params: Map<String, String>? = null,
+        @get:JvmName("body") val body: String? = null,
     )
 
     override fun compareTo(other: MigrationFile): Int {

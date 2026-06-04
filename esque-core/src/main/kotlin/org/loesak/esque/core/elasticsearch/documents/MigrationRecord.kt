@@ -7,13 +7,13 @@ import java.time.Instant
 @JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.NAME)
 @JsonTypeName(value = "migration")
 data class MigrationRecord(
-    val migrationKey: String,
-    val order: Int,
-    val filename: String,
-    val version: String,
-    val description: String,
-    val checksum: Int,
-    val installedBy: String?,
-    val installedOn: Instant,
-    val executionTime: Long,
+    @get:JvmName("migrationKey") val migrationKey: String,
+    @get:JvmName("order") val order: Int,
+    @get:JvmName("filename") val filename: String,
+    @get:JvmName("version") val version: String,
+    @get:JvmName("description") val description: String,
+    @get:JvmName("checksum") val checksum: Int,
+    @get:JvmName("installedBy") val installedBy: String?,
+    @get:JvmName("installedOn") val installedOn: Instant,
+    @get:JvmName("executionTime") val executionTime: Long,
 )
