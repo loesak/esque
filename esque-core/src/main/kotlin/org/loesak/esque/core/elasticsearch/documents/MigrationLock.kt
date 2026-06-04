@@ -7,4 +7,4 @@ import java.time.Instant
 
 @JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.NAME)
 @JsonTypeName(value = "lock")
-data class MigrationLock(@get:JvmName("date") @JsonProperty("date") val date: Instant)
+data class MigrationLock(@get:JvmName("date") @get:JsonProperty("date") val date: Instant)

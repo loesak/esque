@@ -15,15 +15,15 @@ data class MigrationFile(
     )
 
     data class MigrationFileContents(
-        @get:JvmName("requests") @JsonProperty("requests") val requests: List<MigrationFileRequestDefinition>,
+        @get:JvmName("requests") @get:JsonProperty("requests") val requests: List<MigrationFileRequestDefinition>,
     )
 
     data class MigrationFileRequestDefinition(
-        @get:JvmName("method") @JsonProperty("method") val method: String,
-        @get:JvmName("path") @JsonProperty("path") val path: String,
-        @get:JvmName("contentType") @JsonProperty("contentType") val contentType: String? = null,
-        @get:JvmName("params") @JsonProperty("params") val params: Map<String, String>? = null,
-        @get:JvmName("body") @JsonProperty("body") val body: String? = null,
+        @get:JvmName("method") @get:JsonProperty("method") val method: String,
+        @get:JvmName("path") @get:JsonProperty("path") val path: String,
+        @get:JvmName("contentType") @get:JsonProperty("contentType") val contentType: String? = null,
+        @get:JvmName("params") @get:JsonProperty("params") val params: Map<String, String>? = null,
+        @get:JvmName("body") @get:JsonProperty("body") val body: String? = null,
     )
 
     override fun compareTo(other: MigrationFile): Int {
