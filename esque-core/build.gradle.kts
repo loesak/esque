@@ -23,32 +23,11 @@ tasks.test {
     useJUnitPlatform()
 }
 
-val isSnapshot = version.toString().endsWith("-SNAPSHOT")
-
-// For SNAPSHOT versions, publish directly to the Central snapshot repository
-// (the portal API used by vanniktech does not support SNAPSHOTs).
-// For release versions, vanniktech handles the Central Portal upload.
-if (isSnapshot) {
-    publishing {
-        repositories {
-            maven {
-                name = "centralSnapshots"
-                url = uri("https://central.sonatype.com/repository/maven-snapshots/")
-                credentials {
-                    username = providers.gradleProperty("mavenCentralUsername").orNull
-                        ?: System.getenv("ORG_GRADLE_PROJECT_mavenCentralUsername")
-                    password = providers.gradleProperty("mavenCentralPassword").orNull
-                        ?: System.getenv("ORG_GRADLE_PROJECT_mavenCentralPassword")
-                }
-            }
-        }
-    }
-}
-
 mavenPublishing {
-    if (!isSnapshot) {
-        publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
-    }
+    // Publishes releases via the Central Portal API and SNAPSHOTs to
+    // https://central.sonatype.com/repository/maven-snapshots/ automatically.
+    // Requires snapshots to be enabled for the namespace on central.sonatype.com.
+    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
     if (providers.gradleProperty("signingInPlaceKey").isPresent ||
         providers.environmentVariable("ORG_GRADLE_PROJECT_signingInPlaceKey").isPresent) {
         signAllPublications()
