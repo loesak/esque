@@ -13,7 +13,6 @@ import org.loesak.esque.core.yaml.model.MigrationFile
 import java.time.Instant
 
 class RestClientOperationsIT : AbstractElasticsearchIT() {
-
     private lateinit var client: RestClient
     private lateinit var operations: RestClientOperations
 
@@ -112,9 +111,11 @@ class RestClientOperationsIT : AbstractElasticsearchIT() {
     @Test
     fun getMigrationRecordForMigrationFile_returnsNullWhenNotFound() {
         operations.createMigrationIndex()
-        val file = MigrationFile(
-            MigrationFile.MigrationFileMetadata("V1.0.0__Test.yml", "1.0.0", "Test", 12345),
-            MigrationFile.MigrationFileContents(emptyList()))
+        val file =
+            MigrationFile(
+                MigrationFile.MigrationFileMetadata("V1.0.0__Test.yml", "1.0.0", "Test", 12345),
+                MigrationFile.MigrationFileContents(emptyList()),
+            )
         assertThat(operations.getMigrationRecordForMigrationFile(file, MIGRATION_KEY)).isNull()
     }
 
@@ -125,9 +126,11 @@ class RestClientOperationsIT : AbstractElasticsearchIT() {
         val now = Instant.now()
         operations.createMigrationRecord(MigrationRecord(MIGRATION_KEY, 0, "V1.0.0__Test.yml", "1.0.0", "Test", 12345, "user", now, 50L))
 
-        val file = MigrationFile(
-            MigrationFile.MigrationFileMetadata("V1.0.0__Test.yml", "1.0.0", "Test", 12345),
-            MigrationFile.MigrationFileContents(emptyList()))
+        val file =
+            MigrationFile(
+                MigrationFile.MigrationFileMetadata("V1.0.0__Test.yml", "1.0.0", "Test", 12345),
+                MigrationFile.MigrationFileContents(emptyList()),
+            )
 
         val found = operations.getMigrationRecordForMigrationFile(file, MIGRATION_KEY)
         assertThat(found).isNotNull()
@@ -146,17 +149,23 @@ class RestClientOperationsIT : AbstractElasticsearchIT() {
     @Test
     fun executeMigrationDefinition_withBodyAndParams() {
         operations.executeMigrationDefinition(
-            MigrationFile.MigrationFileRequestDefinition("PUT", "/test-param-index", "application/json; charset=utf-8"))
+            MigrationFile.MigrationFileRequestDefinition("PUT", "/test-param-index", "application/json; charset=utf-8"),
+        )
 
-        val definition = MigrationFile.MigrationFileRequestDefinition(
-            "POST", "/_aliases", "application/json; charset=utf-8", null,
-            """
-            {
-                "actions": [
-                    { "add": { "index": "test-param-index", "alias": "test-param-alias" } }
-                ]
-            }
-            """.trimIndent())
+        val definition =
+            MigrationFile.MigrationFileRequestDefinition(
+                "POST",
+                "/_aliases",
+                "application/json; charset=utf-8",
+                null,
+                """
+                {
+                    "actions": [
+                        { "add": { "index": "test-param-index", "alias": "test-param-alias" } }
+                    ]
+                }
+                """.trimIndent(),
+            )
 
         operations.executeMigrationDefinition(definition)
 

@@ -15,153 +15,167 @@ import java.util.concurrent.locks.Lock
 
 private val log = KotlinLogging.logger {}
 
-class Esque @JvmOverloads constructor(
-    client: RestClient,
-    private val migrationKey: String,
-    private val migrationUser: String? = null,
-) : Closeable {
+class Esque
+    @JvmOverloads
+    constructor(
+        client: RestClient,
+        private val migrationKey: String,
+        private val migrationUser: String? = null,
+    ) : Closeable {
+        private val migrationLoader = MigrationFileLoader()
+        private val operations = RestClientOperations(client, migrationKey)
+        private val lock: Lock = ElasticsearchDocumentLock(operations)
 
-    private val migrationLoader = MigrationFileLoader()
-    private val operations = RestClientOperations(client, migrationKey)
-    private val lock: Lock = ElasticsearchDocumentLock(operations)
-
-    override fun close() {
-        try {
-            lock.unlock()
-        } catch (e: IllegalMonitorStateException) {
-            // intentionally left blank. means lock is already unlocked
-        } catch (e: Exception) {
-            log.warn(e) { "failed to release a execution lock. you may need to manually delete the lock document yourself" }
-        }
-
-        try {
-            operations.close()
-        } catch (e: Exception) {
-            log.warn(e) { "failed to close rest client. this is likely not an issue" }
-        }
-    }
-
-    fun execute() {
-        log.info { "Starting esque execution" }
-        try {
-            initialize()
-
-            val files = migrationLoader.load()
-            val history = operations.getMigrationRecords()
-
-            verifyStateIntegrity(files, history)
-            runMigrations(files)
-
-            log.info { "Completed esque execution" }
-        } catch (e: Exception) {
-            throw RuntimeException("Failed to run esque execution", e)
-        }
-    }
-
-    private fun initialize() {
-        log.info { "Initializing esque as needed" }
-        if (!operations.checkMigrationIndexExists()) {
-            operations.createMigrationIndex()
-        }
-    }
-
-    private fun verifyStateIntegrity(files: List<MigrationFile>, history: List<MigrationRecord>) {
-        try {
-            log.info { "Verifying integrity of migration state as compared to found migration files" }
-
-            if (history.size > files.size) {
-                throw IllegalStateException("the migration records are showing more migrations than the local system defines. did you refactor your files or use an incorrect migration key?")
-            }
-
-            if (history.isNotEmpty() && history.size != history.last().order + 1) {
-                throw IllegalStateException("the migration records seem to be corrupt as some records appear to be missing.")
-            }
-
-            history.forEach { record ->
-                val companion = files.firstOrNull { it.metadata.filename == record.filename }
-                    ?: throw IllegalStateException("could not find migration file matching migration history record by filename [${record.filename}]")
-
-                if (record.order != files.indexOf(companion)
-                    || record.version != companion.metadata.version
-                    || record.description != companion.metadata.description
-                    || record.checksum != companion.metadata.checksum
-                    || record.migrationKey != migrationKey
-                ) {
-                    throw IllegalStateException("could not verify integrity of migration history record for filename [${record.filename}]. did you refactor your migration scripts after a previous execution?")
-                }
-            }
-
-            log.info { "Integrity checks passed" }
-        } catch (e: Exception) {
-            throw IllegalStateException("state integrity checks failed", e)
-        }
-    }
-
-    private fun runMigrations(files: List<MigrationFile>) {
-        try {
-            files.forEach { file ->
-                try {
-                    log.info { "Attempting to acquire lock for execution" }
-
-                    if (lock.tryLock(5, TimeUnit.MINUTES)) {
-                        log.info { "Lock acquired. Executing queries defined in migration file [${file.metadata.filename}]" }
-
-                        if (operations.getMigrationRecordForMigrationFile(file, migrationKey) != null) {
-                            log.info { "Migration for migration file [${file.metadata.filename}] and migration key [$migrationKey] appears to already have been executed. Skipping" }
-                        } else {
-                            val start = Instant.now()
-                            runMigrationForFile(file)
-                            val end = Instant.now()
-                            val duration = Duration.between(start, end).toMillis()
-
-                            log.info { "Execution complete for migration file [${file.metadata.filename}]. Took [$duration] milliseconds" }
-
-                            operations.createMigrationRecord(
-                                MigrationRecord(
-                                    migrationKey = migrationKey,
-                                    order = files.indexOf(file),
-                                    filename = file.metadata.filename,
-                                    version = file.metadata.version,
-                                    description = file.metadata.description,
-                                    checksum = file.metadata.checksum,
-                                    installedBy = migrationUser,
-                                    installedOn = end,
-                                    executionTime = duration,
-                                )
-                            )
-                        }
-                    } else {
-                        // TODO: this could happen for long running queries. need to look for something a bit smarter or allow to be configurable
-                        log.error { "Failed to acquire lock in the allotted time period. Did a lock not get cleared as part of a previous execution?" }
-                        throw IllegalStateException("failed to acquire lock")
-                    }
-                } catch (e: Exception) {
-                    throw RuntimeException("Failed to execute queries in migration file [${file.metadata.filename}]", e)
-                    // TODO: should we write a "FAILED" migration record?
-                } finally {
-                    log.info { "Releasing execution lock" }
-                    lock.unlock()
-                }
-            }
-        } catch (e: Exception) {
-            throw IllegalStateException("failed to run migrations", e)
-        }
-    }
-
-    private fun runMigrationForFile(file: MigrationFile) {
-        log.info { "Executing queries defined in migration file [${file.metadata.filename}]" }
-
-        val requests = file.contents.requests
-        requests.forEachIndexed { position, definition ->
+        override fun close() {
             try {
-                log.info { "Executing query in position [$position] defined in migration file [${file.metadata.filename}]" }
-                operations.executeMigrationDefinition(definition)
-                log.info { "Query in position [$position] defined in migration file [${file.metadata.filename}] executed successfully" }
+                lock.unlock()
+            } catch (e: IllegalMonitorStateException) {
+                // intentionally left blank. means lock is already unlocked
             } catch (e: Exception) {
-                throw IllegalStateException("Failed to execute query in position [$position] defined in migration file [${file.metadata.filename}]", e)
+                log.warn(e) { "failed to release a execution lock. you may need to manually delete the lock document yourself" }
+            }
+
+            try {
+                operations.close()
+            } catch (e: Exception) {
+                log.warn(e) { "failed to close rest client. this is likely not an issue" }
             }
         }
 
-        log.info { "Execution complete for queries defined in migration file [${file.metadata.filename}]" }
+        fun execute() {
+            log.info { "Starting esque execution" }
+            try {
+                initialize()
+
+                val files = migrationLoader.load()
+                val history = operations.getMigrationRecords()
+
+                verifyStateIntegrity(files, history)
+                runMigrations(files)
+
+                log.info { "Completed esque execution" }
+            } catch (e: Exception) {
+                throw RuntimeException("Failed to run esque execution", e)
+            }
+        }
+
+        private fun initialize() {
+            log.info { "Initializing esque as needed" }
+            if (!operations.checkMigrationIndexExists()) {
+                operations.createMigrationIndex()
+            }
+        }
+
+        private fun verifyStateIntegrity(
+            files: List<MigrationFile>,
+            history: List<MigrationRecord>,
+        ) {
+            try {
+                log.info { "Verifying integrity of migration state as compared to found migration files" }
+
+                if (history.size > files.size) {
+                    throw IllegalStateException(
+                        "the migration records are showing more migrations than the local system defines. did you refactor your files or use an incorrect migration key?",
+                    )
+                }
+
+                if (history.isNotEmpty() && history.size != history.last().order + 1) {
+                    throw IllegalStateException("the migration records seem to be corrupt as some records appear to be missing.")
+                }
+
+                history.forEach { record ->
+                    val companion =
+                        files.firstOrNull { it.metadata.filename == record.filename }
+                            ?: throw IllegalStateException("could not find migration file matching migration history record by filename [${record.filename}]")
+
+                    if (record.order != files.indexOf(companion) ||
+                        record.version != companion.metadata.version ||
+                        record.description != companion.metadata.description ||
+                        record.checksum != companion.metadata.checksum ||
+                        record.migrationKey != migrationKey
+                    ) {
+                        throw IllegalStateException(
+                            "could not verify integrity of migration history record for filename [${record.filename}]. did you refactor your migration scripts after a previous execution?",
+                        )
+                    }
+                }
+
+                log.info { "Integrity checks passed" }
+            } catch (e: Exception) {
+                throw IllegalStateException("state integrity checks failed", e)
+            }
+        }
+
+        private fun runMigrations(files: List<MigrationFile>) {
+            try {
+                files.forEach { file ->
+                    try {
+                        log.info { "Attempting to acquire lock for execution" }
+
+                        if (lock.tryLock(5, TimeUnit.MINUTES)) {
+                            log.info { "Lock acquired. Executing queries defined in migration file [${file.metadata.filename}]" }
+
+                            if (operations.getMigrationRecordForMigrationFile(file, migrationKey) != null) {
+                                log.info {
+                                    "Migration for migration file [${file.metadata.filename}] and migration key [$migrationKey] appears to already have been executed. Skipping"
+                                }
+                            } else {
+                                val start = Instant.now()
+                                runMigrationForFile(file)
+                                val end = Instant.now()
+                                val duration = Duration.between(start, end).toMillis()
+
+                                log.info { "Execution complete for migration file [${file.metadata.filename}]. Took [$duration] milliseconds" }
+
+                                operations.createMigrationRecord(
+                                    MigrationRecord(
+                                        migrationKey = migrationKey,
+                                        order = files.indexOf(file),
+                                        filename = file.metadata.filename,
+                                        version = file.metadata.version,
+                                        description = file.metadata.description,
+                                        checksum = file.metadata.checksum,
+                                        installedBy = migrationUser,
+                                        installedOn = end,
+                                        executionTime = duration,
+                                    ),
+                                )
+                            }
+                        } else {
+                            // TODO: this could happen for long running queries. need to look for something a bit smarter or allow to be configurable
+                            log.error { "Failed to acquire lock in the allotted time period. Did a lock not get cleared as part of a previous execution?" }
+                            throw IllegalStateException("failed to acquire lock")
+                        }
+                    } catch (e: Exception) {
+                        throw RuntimeException("Failed to execute queries in migration file [${file.metadata.filename}]", e)
+                        // TODO: should we write a "FAILED" migration record?
+                    } finally {
+                        log.info { "Releasing execution lock" }
+                        lock.unlock()
+                    }
+                }
+            } catch (e: Exception) {
+                throw IllegalStateException("failed to run migrations", e)
+            }
+        }
+
+        private fun runMigrationForFile(file: MigrationFile) {
+            log.info { "Executing queries defined in migration file [${file.metadata.filename}]" }
+
+            val requests = file.contents.requests
+            requests.forEachIndexed { position, definition ->
+                try {
+                    log.info { "Executing query in position [$position] defined in migration file [${file.metadata.filename}]" }
+                    operations.executeMigrationDefinition(definition)
+                    log.info { "Query in position [$position] defined in migration file [${file.metadata.filename}] executed successfully" }
+                } catch (e: Exception) {
+                    throw IllegalStateException(
+                        "Failed to execute query in position [$position] defined in migration file [${file.metadata.filename}]",
+                        e,
+                    )
+                }
+            }
+
+            log.info { "Execution complete for queries defined in migration file [${file.metadata.filename}]" }
+        }
     }
-}

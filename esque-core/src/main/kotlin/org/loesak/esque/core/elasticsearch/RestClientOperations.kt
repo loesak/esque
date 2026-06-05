@@ -26,13 +26,13 @@ internal class RestClientOperations(
     private val client: RestClient,
     private val migrationKey: String,
 ) : Closeable {
-
-    private val mapper = jacksonObjectMapper().apply {
-        registerModule(JavaTimeModule())
-        disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-        disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-        setSerializationInclusion(JsonInclude.Include.NON_NULL)
-    }
+    private val mapper =
+        jacksonObjectMapper().apply {
+            registerModule(JavaTimeModule())
+            disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        }
 
     override fun close() {
         client.close()
@@ -41,8 +41,9 @@ internal class RestClientOperations(
     fun checkMigrationIndexExists(): Boolean {
         return try {
             log.info { "Checking if migration index with name [$MIGRATION_DOCUMENT_INDEX] exists" }
-            val status = sendRequest(Request(HTTP_METHOD_HEAD, MIGRATION_DOCUMENT_INDEX))
-                .statusLine.statusCode == 200
+            val status =
+                sendRequest(Request(HTTP_METHOD_HEAD, MIGRATION_DOCUMENT_INDEX))
+                    .statusLine.statusCode == 200
             log.info { "Determined migration index with name [$MIGRATION_DOCUMENT_INDEX] ${if (status) "exists" else "does not exist"}" }
             status
         } catch (e: Exception) {
@@ -55,20 +56,24 @@ internal class RestClientOperations(
             log.info { "Creating migration index with name [$MIGRATION_DOCUMENT_INDEX]" }
 
             val request = Request(HTTP_METHOD_PUT, MIGRATION_DOCUMENT_INDEX)
-            request.entity = InputStreamEntity(
-                checkNotNull(javaClass.classLoader.getResourceAsStream(MIGRATION_DOCUMENT_INDEX_DEFINITION_FILE_PATH)),
-                ContentType.APPLICATION_JSON,
-            )
+            request.entity =
+                InputStreamEntity(
+                    checkNotNull(javaClass.classLoader.getResourceAsStream(MIGRATION_DOCUMENT_INDEX_DEFINITION_FILE_PATH)),
+                    ContentType.APPLICATION_JSON,
+                )
 
             try {
                 sendRequest(request)
             } catch (e: ResponseException) {
                 val content: Map<String, Any> = mapper.readValue(e.response.entity.content, object : TypeReference<Map<String, Any>>() {})
+
                 @Suppress("UNCHECKED_CAST")
                 val alreadyExists = (content["error"] as? Map<String, Any>)?.get("type") == "resource_already_exists_exception"
 
                 if (alreadyExists) {
-                    log.info { "Creation of migration index with name [$MIGRATION_DOCUMENT_INDEX] failed because it already exists. Likely another process got ahead of this process. Ignoring exception." }
+                    log.info {
+                        "Creation of migration index with name [$MIGRATION_DOCUMENT_INDEX] failed because it already exists. Likely another process got ahead of this process. Ignoring exception."
+                    }
                 } else {
                     throw e
                 }
@@ -121,9 +126,10 @@ internal class RestClientOperations(
             val content: Map<String, Any> = mapper.readValue(response.entity.content, object : TypeReference<Map<String, Any>>() {})
 
             @Suppress("UNCHECKED_CAST")
-            val records = extractHits(content)
-                .map { mapper.convertValue(it["_source"], MigrationRecord::class.java) }
-                .sortedBy { it.order }
+            val records =
+                extractHits(content)
+                    .map { mapper.convertValue(it["_source"], MigrationRecord::class.java) }
+                    .sortedBy { it.order }
 
             log.info { "Found [${records.size}] migration records" }
             records
@@ -132,7 +138,10 @@ internal class RestClientOperations(
         }
     }
 
-    fun getMigrationRecordForMigrationFile(file: MigrationFile, migrationKey: String): MigrationRecord? {
+    fun getMigrationRecordForMigrationFile(
+        file: MigrationFile,
+        migrationKey: String,
+    ): MigrationRecord? {
         return try {
             log.info { "Getting migration record for migration file named [${file.metadata.filename}] and migration key [$migrationKey]" }
 
@@ -143,22 +152,29 @@ internal class RestClientOperations(
             val content: Map<String, Any> = mapper.readValue(response.entity.content, object : TypeReference<Map<String, Any>>() {})
 
             @Suppress("UNCHECKED_CAST")
-            val records = extractHits(content)
-                .map { mapper.convertValue(it["_source"], MigrationRecord::class.java) }
+            val records =
+                extractHits(content)
+                    .map { mapper.convertValue(it["_source"], MigrationRecord::class.java) }
 
             when {
-                records.size > 1 -> throw IllegalStateException("found more than one migration record for migration file named [${file.metadata.filename}] and migration key [$migrationKey]")
+                records.size > 1 -> throw IllegalStateException(
+                    "found more than one migration record for migration file named [${file.metadata.filename}] and migration key [$migrationKey]",
+                )
                 records.size == 1 -> {
                     log.info { "Found existing migration record for migration file named [${file.metadata.filename}] and migration key [$migrationKey]" }
                     records[0]
                 }
                 else -> {
-                    log.info { "Did not find any existing migration record for migration file named [${file.metadata.filename}] and migration key [$migrationKey]" }
+                    log.info {
+                        "Did not find any existing migration record for migration file named [${file.metadata.filename}] and migration key [$migrationKey]"
+                    }
                     null
                 }
             }
         } catch (e: Exception) {
-            throw IllegalStateException("Failed to get migration records for migration file named [${file.metadata.filename}] and migration key [$migrationKey]")
+            throw IllegalStateException(
+                "Failed to get migration records for migration file named [${file.metadata.filename}] and migration key [$migrationKey]",
+            )
         }
     }
 

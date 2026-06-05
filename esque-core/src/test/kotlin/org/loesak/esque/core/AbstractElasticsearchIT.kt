@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 
 abstract class AbstractElasticsearchIT {
-
     companion object {
         val ELASTICSEARCH: ElasticsearchContainer =
             ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:9.3.0")
@@ -23,8 +22,14 @@ abstract class AbstractElasticsearchIT {
     @BeforeEach
     protected fun cleanElasticsearch() {
         createRestClient().use { client ->
-            try { client.performRequest(Request("DELETE", "/.esque")) } catch (_: ResponseException) {}
-            try { client.performRequest(Request("DELETE", "/test-*")) } catch (_: ResponseException) {}
+            try {
+                client.performRequest(Request("DELETE", "/.esque"))
+            } catch (_: ResponseException) {
+            }
+            try {
+                client.performRequest(Request("DELETE", "/test-*"))
+            } catch (_: ResponseException) {
+            }
         }
     }
 

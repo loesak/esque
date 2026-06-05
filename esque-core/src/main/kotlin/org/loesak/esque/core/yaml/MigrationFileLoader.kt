@@ -14,17 +14,23 @@ import java.security.MessageDigest
 private val log = KotlinLogging.logger {}
 
 internal class MigrationFileLoader {
-
     fun load(): List<MigrationFile> {
         log.info { "Loading migration files from [$MIGRATION_DEFINITION_DIRECTORY]" }
 
-        val files = Files
-            .list(Paths.get(checkNotNull(javaClass.classLoader.getResource("$MIGRATION_DEFINITION_DIRECTORY/")) { "Migration directory not found on classpath" }.toURI()))
-            .filter(Files::isRegularFile)
-            .filter { FILE_NAME_PATTERN.matches(it.toFile().name) }
-            .map { read(it) }
-            .sorted()
-            .toList()
+        val files =
+            Files
+                .list(
+                    Paths.get(
+                        checkNotNull(javaClass.classLoader.getResource("$MIGRATION_DEFINITION_DIRECTORY/")) {
+                            "Migration directory not found on classpath"
+                        }.toURI(),
+                    ),
+                )
+                .filter(Files::isRegularFile)
+                .filter { FILE_NAME_PATTERN.matches(it.toFile().name) }
+                .map { read(it) }
+                .sorted()
+                .toList()
 
         log.info { "Found [${files.size}] migration files" }
 
@@ -43,17 +49,19 @@ internal class MigrationFileLoader {
             val filename = path.toFile().name
             log.info { "Reading contents of migration file [$filename]" }
 
-            val match = FILE_NAME_PATTERN.matchEntire(filename)
-                ?: throw IllegalStateException("filename does not match expected pattern")
+            val match =
+                FILE_NAME_PATTERN.matchEntire(filename)
+                    ?: throw IllegalStateException("filename does not match expected pattern")
 
             return try {
                 MigrationFile(
-                    metadata = MigrationFile.MigrationFileMetadata(
-                        filename = filename,
-                        version = match.groupValues[1],
-                        description = match.groupValues[3],
-                        checksum = calculateChecksum(path),
-                    ),
+                    metadata =
+                        MigrationFile.MigrationFileMetadata(
+                            filename = filename,
+                            version = match.groupValues[1],
+                            description = match.groupValues[3],
+                            checksum = calculateChecksum(path),
+                        ),
                     contents = YAML_MAPPER.readValue(Files.newInputStream(path), MigrationFile.MigrationFileContents::class.java),
                 )
             } catch (e: Exception) {
