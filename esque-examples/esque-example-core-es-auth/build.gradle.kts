@@ -1,4 +1,4 @@
 dependencies {
-    implementation(project(":esque-core"))
-    implementation(libs.logback.classic)
+  implementation(project(":esque-core"))
+  implementation(libs.logback.classic)
 }
