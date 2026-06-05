@@ -5,36 +5,43 @@
 **Esque** (**E**lasticsearch **S**tateful **Qu**ery **E**xecutor) is a migration management library for Elasticsearch, similar to Flyway but for ES clusters. It executes pre-defined queries in order, tracks which have been applied, validates integrity, and supports distributed locking for safe concurrent execution.
 
 - **License:** Apache 2.0
-- **Language:** Java 21
-- **Build:** Maven 3.9+
-- **Target:** Elasticsearch 7+ / 8+ (client version 8.17.x low-level REST client)
-- **Published to:** Maven Central via OSSRH
+- **Language:** Kotlin 2.4.0 (JVM 21)
+- **Build:** Maven 3.9+ and Gradle 9.5.1 (both supported)
+- **Target:** Elasticsearch 9+ (client version 9.4.x low-level REST client)
+- **Published to:** Maven Central via Central Portal
 
 ## Repository Structure
 
 ```
 esque/
-├── pom.xml                          # Parent POM (multi-module)
+├── pom.xml                          # Parent POM (multi-module Maven build)
+├── build.gradle.kts                 # Root Gradle build
+├── settings.gradle.kts              # Gradle settings (module declarations)
+├── gradle/
+│   ├── libs.versions.toml           # Gradle version catalog
+│   └── wrapper/                     # Gradle wrapper (9.5.1)
+├── gradlew / gradlew.bat            # Gradle wrapper scripts
 ├── version.sh                       # Git-tag-based version calculation
 ├── .github/workflows/
-│   └── maven-deploy.yml             # CI/CD: build + deploy to Maven Central
+│   ├── maven-deploy.yml             # CI/CD: Maven build + deploy to Maven Central
+│   └── gradle-deploy.yml            # CI/CD: Gradle build + deploy to Maven Central
 ├── .devcontainer/                   # Dev container (Ubuntu, Zulu JDK 21, Maven 3.9)
 ├── esque-core/                      # Core library (the published artifact)
 │   ├── pom.xml
-│   └── src/main/java/org/loesak/esque/core/
-│       ├── Esque.java               # Main entry point / orchestrator
+│   ├── build.gradle.kts
+│   └── src/main/kotlin/org/loesak/esque/core/
+│       ├── Esque.kt                 # Main entry point / orchestrator
 │       ├── concurrent/
-│       │   └── ElasticsearchDocumentLock.java  # Distributed lock via ES docs
+│       │   └── ElasticsearchDocumentLock.kt  # Distributed lock via ES docs
 │       ├── elasticsearch/
-│       │   ├── RestClientOperations.java       # ES REST client abstraction
-│       │   ├── documents/
-│       │   │   ├── MigrationRecord.java        # Applied migration record model
-│       │   │   └── MigrationLock.java          # Lock document model
-│       │   └── compatibility/                  # Reserved for multi-ES-version support
+│       │   ├── RestClientOperations.kt       # ES REST client abstraction
+│       │   └── documents/
+│       │       ├── MigrationRecord.kt        # Applied migration record model
+│       │       └── MigrationLock.kt          # Lock document model
 │       └── yaml/
-│           ├── MigrationFileLoader.java        # YAML file discovery and parsing
+│           ├── MigrationFileLoader.kt        # YAML file discovery and parsing
 │           └── model/
-│               └── MigrationFile.java          # Migration file domain model
+│               └── MigrationFile.kt          # Migration file domain model
 └── esque-examples/                  # Example applications (not published)
     ├── esque-example-core-simple/   # Basic usage, no auth
     ├── esque-example-core-es-auth/  # Elasticsearch basic auth
@@ -46,27 +53,35 @@ esque/
 ### Prerequisites
 
 - Java 21 (Zulu distribution recommended)
-- Maven 3.9+
+- Maven 3.9+ or Gradle (wrapper included — no install needed)
 
 ### Common Commands
 
 ```bash
-# Compile the project
+# Maven — compile
 mvn clean compile
 
-# Package (skip GPG signing for local dev)
+# Maven — package (skip GPG signing for local dev)
 mvn clean package -Dgpg.skip=true
 
-# Install to local repo (skip GPG signing)
+# Maven — install to local repo
 mvn clean install -Dgpg.skip=true
 
-# Resolve all dependencies (used by devcontainer on attach)
-find . -type f -name "pom.xml" -execdir mvn dependency:resolve \;
+# Gradle — compile
+./gradlew compileKotlin
+
+# Gradle — build (compile + test)
+./gradlew build
+
+# Gradle — pass version explicitly (mirrors version.sh output)
+./gradlew -PprojectVersion=1.0.0-SNAPSHOT build
 ```
 
 ### GPG Signing
 
-All artifacts are GPG-signed for Maven Central deployment. For local development, always pass `-Dgpg.skip=true` to skip signing. CI handles signing automatically via secrets.
+**Maven:** All artifacts are GPG-signed for Maven Central deployment. Pass `-Dgpg.skip=true` for local development. CI handles signing automatically via secrets.
+
+**Gradle:** Signing uses in-memory PGP keys via vanniktech's `signingInPlaceKey` / `signingInPlaceKeyPassword` Gradle properties, supplied as environment variables in CI. No GPG keyring import needed.
 
 ### Versioning
 
@@ -74,16 +89,17 @@ Version is derived from git tags via `version.sh`:
 - If the tag matches `X.Y.Z` exactly, that version is used as-is
 - Otherwise, the git describe output gets `-SNAPSHOT` appended
 
-CI sets the version with `mvn versions:set -DnewVersion=$(./version.sh)` before building.
+**Maven CI:** `mvn versions:set -DnewVersion=$(./version.sh)` before building.
+**Gradle CI:** `-PprojectVersion=$(./version.sh)` passed on the command line.
 
 ### CI/CD
 
-GitHub Actions workflow (`.github/workflows/maven-deploy.yml`) triggers on:
-- Push to `master`
-- Pull requests to `master`
-- GitHub releases (published)
+Two GitHub Actions workflows trigger on push to `master`, pull requests to `master`, and GitHub releases:
 
-It builds with Java 21 (Zulu) and deploys to OSSRH (Maven Central staging).
+- **`maven-deploy.yml`** — runs `mvn clean deploy`; signs with GPG via `maven-gpg-plugin`
+- **`gradle-deploy.yml`** — runs `./gradlew build` then `./gradlew publish -x test`; signs in-memory via vanniktech
+
+Both workflows attempt SNAPSHOT publishing on every run. SNAPSHOT publishing requires the namespace to have snapshots enabled at central.sonatype.com.
 
 ## Architecture
 
@@ -108,10 +124,10 @@ It builds with Java 21 (Zulu) and deploys to OSSRH (Maven Central staging).
 | `Esque` | Main orchestrator - coordinates the full migration lifecycle |
 | `RestClientOperations` | ES REST client abstraction for all index/document operations |
 | `MigrationFileLoader` | Discovers and parses YAML files from classpath |
-| `MigrationFile` | Domain model (Java record) for migration files with version-based ordering |
+| `MigrationFile` | Domain model (data class) for migration files with version-based ordering |
 | `ElasticsearchDocumentLock` | Distributed lock using ES `op_type=create` for atomicity |
-| `MigrationRecord` | Domain model (Java record) for applied migration history records |
-| `MigrationLock` | Domain model (Java record) for lock documents |
+| `MigrationRecord` | Domain model (data class) for applied migration history records |
+| `MigrationLock` | Domain model (data class) for lock documents |
 
 ### Distributed Locking
 
@@ -178,40 +194,45 @@ Integrity is verified by matching file checksums (MD5) against stored records.
 
 ### Patterns and Libraries
 
-- **Java Records**: Used for all immutable domain models (`MigrationRecord`, `MigrationLock`, `MigrationFile` and its nested types). Null validation via `Objects.requireNonNull` in compact constructors.
-- **Lombok**: Used for cross-cutting concerns
-  - `@Slf4j` for logging
-  - `@NonNull` for null validation on non-record constructors (e.g., `Esque`)
+- **Kotlin data classes**: Used for all immutable domain models (`MigrationRecord`, `MigrationLock`, `MigrationFile` and its nested types). Kotlin null safety enforces non-null constraints.
 - **Jackson**: Full suite for JSON and YAML serialization, versions managed via `jackson-bom`
   - `@JsonTypeInfo` / `@JsonTypeName` for type-wrapped serialization on document models
-  - Native record deserialization support (Jackson 2.18+)
-- **Java Streams**: Preferred for collection transformations (filter-map-collect)
-- **Immutable collections**: `Stream.toList()` used for result sets
-- **Resource management**: `Closeable` interface with try-with-resources
-- **Logging**: SLF4J via Lombok `@Slf4j`; info for flow, debug for request/response detail, warn/error for failures
+  - `jackson-module-kotlin` for Kotlin data class deserialization
+- **kotlin-logging** (`io.github.oshai.kotlinlogging.KotlinLogging`): top-level `val log = KotlinLogging.logger {}`
+- **Kotlin idioms**: extension functions, `use {}` for resource management, `filter`/`map`/`toList()` for collections
+- **Logging**: SLF4J via kotlin-logging; info for flow, debug for request/response detail, warn/error for failures
 
 ### Design Principles
 
-- Domain models are immutable (Java records)
+- Domain models are immutable (Kotlin data classes)
 - All ES operations are centralized in `RestClientOperations`
 - Migration ordering is deterministic via `Comparable<MigrationFile>` (version parts, then lexical)
-- Exceptions wrap lower-level errors with context messages using `String.format`
+- Exceptions wrap lower-level errors with context messages
 - No rollback on failure (documented limitation)
 
 ## Testing
 
-There are no unit tests in the codebase. Integration testing is done via the example applications in `esque-examples/`. When adding tests, use the `logback-classic` dependency already declared in test scope.
+Integration tests live in `esque-core/src/test/kotlin/` and are named `*IT`. They use:
+- **JUnit 5** (`junit-jupiter`) as the test framework
+- **AssertJ** for assertions
+- **Testcontainers** (`testcontainers-elasticsearch`) to spin up a real ES instance via Docker
+- **Logback** as the SLF4J implementation (test scope only)
+
+**Maven:** Tests run via `maven-failsafe-plugin` during the `integration-test` phase (`mvn verify`).
+**Gradle:** Tests run via the standard `test` task (`./gradlew test`).
+
+Docker must be available for integration tests to run.
 
 ## Module Notes
 
 - **esque-core**: The published library artifact. Contains all core logic.
-- **esque-examples**: Aggregator POM with example applications. Configured to skip `install` and `deploy` phases. Not published to Maven Central.
+- **esque-examples**: Aggregator with example applications. Not published to Maven Central.
 - **esque-example-core-aws-auth**: Placeholder only (POM exists but no implementation).
 
 ## Known TODOs in Code
 
-- Differentiate lock creation failure vs. lock-already-exists (`RestClientOperations:122`)
-- Configurable lock timeout for long-running queries (`Esque.java:162`)
-- Consider writing "FAILED" migration records (`Esque.java:169`)
+- Differentiate lock creation failure vs. lock-already-exists (`RestClientOperations`)
+- Configurable lock timeout for long-running queries (`Esque.kt`)
+- Consider writing "FAILED" migration records (`Esque.kt`)
 - Rollback/undo capability (mentioned in README)
 - Elasticsearch security / AWS ES security support (README)
