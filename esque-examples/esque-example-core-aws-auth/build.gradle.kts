@@ -1,3 +1,1 @@
-dependencies {
-    implementation(project(":esque-core"))
-}
+dependencies { implementation(project(":esque-core")) }

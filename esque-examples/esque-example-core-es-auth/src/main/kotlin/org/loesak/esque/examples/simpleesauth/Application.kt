@@ -8,19 +8,21 @@ import org.elasticsearch.client.RestClient
 import org.loesak.esque.core.Esque
 
 fun main() {
-    val migrationKey = "esque-example-core-simple"
-    val migrationUser = "migration-user"
-    val migrationPass = "migration-p4\$\$word"
+  val migrationKey = "esque-example-core-simple"
+  val migrationUser = "migration-user"
+  val migrationPass = "migration-p4\$\$word"
 
-    // see https://www.elastic.co/guide/en/elasticsearch/client/java-rest/7.1/_basic_authentication.html
+  // see
+  // https://www.elastic.co/guide/en/elasticsearch/client/java-rest/7.1/_basic_authentication.html
 
-    val credentialsProvider = BasicCredentialsProvider()
-    credentialsProvider.setCredentials(AuthScope.ANY, UsernamePasswordCredentials(migrationUser, migrationPass))
+  val credentialsProvider = BasicCredentialsProvider()
+  credentialsProvider.setCredentials(
+      AuthScope.ANY, UsernamePasswordCredentials(migrationUser, migrationPass))
 
-    val client = RestClient
-        .builder(HttpHost("localhost", 9200, "http"))
-        .setHttpClientConfigCallback { it.setDefaultCredentialsProvider(credentialsProvider) }
-        .build()
+  val client =
+      RestClient.builder(HttpHost("localhost", 9200, "http"))
+          .setHttpClientConfigCallback { it.setDefaultCredentialsProvider(credentialsProvider) }
+          .build()
 
-    Esque(client, migrationKey, migrationUser).use { it.execute() }
+  Esque(client, migrationKey, migrationUser).use { it.execute() }
 }

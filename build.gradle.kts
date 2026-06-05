@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.vanniktech.publish) apply false
+    alias(libs.plugins.ktfmt) apply false
 }
 
 allprojects {
@@ -10,6 +11,7 @@ allprojects {
 
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "com.ncorti.ktfmt.gradle")
 
     repositories {
         mavenCentral()
