@@ -16,7 +16,7 @@ import java.util.concurrent.locks.ReentrantLock
  */
 private val log = KotlinLogging.logger {}
 
-class ElasticsearchDocumentLock @JvmOverloads constructor(
+internal class ElasticsearchDocumentLock(
     private val operations: RestClientOperations,
     private val idleBetweenTries: Duration = DEFAULT_IDLE_BETWEEN_TRIES,
 ) : Lock {

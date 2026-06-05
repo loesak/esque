@@ -22,7 +22,7 @@ import java.time.Instant
 
 private val log = KotlinLogging.logger {}
 
-class RestClientOperations(
+internal class RestClientOperations(
     private val client: RestClient,
     private val migrationKey: String,
 ) : Closeable {

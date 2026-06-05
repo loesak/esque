@@ -6,7 +6,7 @@ import java.time.Instant
 
 @JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.NAME)
 @JsonTypeName(value = "migration")
-data class MigrationRecord(
+internal data class MigrationRecord(
     val migrationKey: String,
     val order: Int,
     val filename: String,
