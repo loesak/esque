@@ -13,7 +13,7 @@ import java.security.MessageDigest
 
 private val log = KotlinLogging.logger {}
 
-class MigrationFileLoader {
+internal class MigrationFileLoader {
 
     fun load(): List<MigrationFile> {
         log.info { "Loading migration files from [$MIGRATION_DEFINITION_DIRECTORY]" }

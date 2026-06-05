@@ -1,6 +1,6 @@
 package org.loesak.esque.core.yaml.model
 
-data class MigrationFile(
+internal data class MigrationFile(
     val metadata: MigrationFileMetadata,
     val contents: MigrationFileContents,
 ) : Comparable<MigrationFile> {
