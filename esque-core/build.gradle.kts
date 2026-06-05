@@ -5,9 +5,9 @@ plugins {
 dependencies {
     implementation(libs.kotlin.stdlib)
     api(libs.elasticsearch.rest.client)
+    implementation(platform(libs.jackson.bom))
     implementation(libs.jackson.databind)
     implementation(libs.jackson.module.kotlin)
-    implementation(libs.jackson.datatype.jsr310)
     implementation(libs.jackson.dataformat.yaml)
     implementation(libs.kotlin.logging.jvm)
     implementation(libs.slf4j.api)
