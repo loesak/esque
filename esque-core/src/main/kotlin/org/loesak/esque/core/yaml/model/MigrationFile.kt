@@ -4,7 +4,6 @@ internal data class MigrationFile(
     val metadata: MigrationFileMetadata,
     val contents: MigrationFileContents,
 ) : Comparable<MigrationFile> {
-
     data class MigrationFileMetadata(
         val filename: String,
         val version: String,

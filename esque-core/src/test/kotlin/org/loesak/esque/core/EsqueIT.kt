@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test
 import org.loesak.esque.core.elasticsearch.RestClientOperations
 
 class EsqueIT : AbstractElasticsearchIT() {
-
     @Test
     fun execute_createsEsqueIndex() {
         createRestClient().use { client ->
@@ -118,7 +117,10 @@ class EsqueIT : AbstractElasticsearchIT() {
         }
     }
 
-    private fun assertIndexExists(client: org.elasticsearch.client.RestClient, indexPath: String) {
+    private fun assertIndexExists(
+        client: org.elasticsearch.client.RestClient,
+        indexPath: String,
+    ) {
         val response = client.performRequest(Request("HEAD", indexPath))
         assertThat(response.statusLine.statusCode).isEqualTo(200)
     }

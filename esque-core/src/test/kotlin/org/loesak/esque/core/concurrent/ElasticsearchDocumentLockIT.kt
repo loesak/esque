@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 class ElasticsearchDocumentLockIT : AbstractElasticsearchIT() {
-
     private lateinit var client: RestClient
     private lateinit var operations: RestClientOperations
 
@@ -84,13 +83,14 @@ class ElasticsearchDocumentLockIT : AbstractElasticsearchIT() {
         val lock2Started = CountDownLatch(1)
         val lock2Done = CountDownLatch(1)
 
-        val t = Thread {
-            lock2Started.countDown()
-            lock2.lock()
-            lock2Acquired.set(true)
-            lock2.unlock()
-            lock2Done.countDown()
-        }
+        val t =
+            Thread {
+                lock2Started.countDown()
+                lock2.lock()
+                lock2Acquired.set(true)
+                lock2.unlock()
+                lock2Done.countDown()
+            }
         t.start()
 
         lock2Started.await(5, TimeUnit.SECONDS)

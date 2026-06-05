@@ -9,6 +9,7 @@ junit = "6.1.0"
 assertj = "3.27.7"
 testcontainers = "2.0.5"
 vanniktech-publish = "0.36.0"
+ktlint-gradle = "12.3.0"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib" }
@@ -30,3 +31,4 @@ testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-jun
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 vanniktech-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-publish" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-gradle" }

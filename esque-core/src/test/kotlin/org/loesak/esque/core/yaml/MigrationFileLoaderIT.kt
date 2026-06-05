@@ -2,10 +2,8 @@ package org.loesak.esque.core.yaml
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.loesak.esque.core.yaml.model.MigrationFile
 
 class MigrationFileLoaderIT {
-
     private val loader = MigrationFileLoader()
 
     @Test

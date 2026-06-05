@@ -17,10 +17,11 @@ fun main() {
     val credentialsProvider = BasicCredentialsProvider()
     credentialsProvider.setCredentials(AuthScope.ANY, UsernamePasswordCredentials(migrationUser, migrationPass))
 
-    val client = RestClient
-        .builder(HttpHost("localhost", 9200, "http"))
-        .setHttpClientConfigCallback { it.setDefaultCredentialsProvider(credentialsProvider) }
-        .build()
+    val client =
+        RestClient
+            .builder(HttpHost("localhost", 9200, "http"))
+            .setHttpClientConfigCallback { it.setDefaultCredentialsProvider(credentialsProvider) }
+            .build()
 
     Esque(client, migrationKey, migrationUser).use { it.execute() }
 }

@@ -20,7 +20,6 @@ internal class ElasticsearchDocumentLock(
     private val operations: RestClientOperations,
     private val idleBetweenTries: Duration = DEFAULT_IDLE_BETWEEN_TRIES,
 ) : Lock {
-
     private val delegate = ReentrantLock()
 
     override fun lock() {
@@ -69,7 +68,10 @@ internal class ElasticsearchDocumentLock(
         }
     }
 
-    override fun tryLock(time: Long, timeUnit: TimeUnit): Boolean {
+    override fun tryLock(
+        time: Long,
+        timeUnit: TimeUnit,
+    ): Boolean {
         val now = System.currentTimeMillis()
 
         if (!delegate.tryLock(time, timeUnit)) return false
