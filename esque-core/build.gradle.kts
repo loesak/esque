@@ -27,7 +27,7 @@ mavenPublishing {
     // Publishes releases via the Central Portal API and SNAPSHOTs to
     // https://central.sonatype.com/repository/maven-snapshots/ automatically.
     // Requires snapshots to be enabled for the namespace on central.sonatype.com.
-    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral()
     if (providers.gradleProperty("signingInPlaceKey").isPresent ||
         providers.environmentVariable("ORG_GRADLE_PROJECT_signingInPlaceKey").isPresent) {
         signAllPublications()
