@@ -12,6 +12,7 @@ dependencies {
     implementation(libs.kotlin.logging.jvm)
     implementation(libs.slf4j.api)
 
+    testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.logback.classic)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj.core)
