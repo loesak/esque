@@ -10,6 +10,7 @@ assertj = "3.27.7"
 testcontainers = "2.0.5"
 vanniktech-publish = "0.36.0"
 ktfmt-gradle = "0.22.0"
+detekt = "1.23.8"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib" }
@@ -32,3 +33,4 @@ testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-jun
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 vanniktech-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-publish" }
 ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt-gradle" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

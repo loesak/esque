@@ -50,7 +50,7 @@ internal class MigrationFileLoader {
 
       val match =
           FILE_NAME_PATTERN.matchEntire(filename)
-              ?: throw IllegalStateException("filename does not match expected pattern")
+              ?: error("filename does not match expected pattern")
 
       return try {
         MigrationFile(
