@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+echo "Running pre-commit checks..."
+
+./gradlew ktfmtCheck detekt test
+
+echo "Pre-commit checks passed."
