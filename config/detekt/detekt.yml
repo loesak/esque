@@ -1,9 +1,0 @@
-style:
-  MaxLineLength:
-    active: false # ktfmt owns line length
-  ForbiddenComment:
-    active: false # informational TODOs are tracked as known issues, not stubs
-
-exceptions:
-  TooGenericExceptionCaught:
-    active: false # overly strict; catching Exception is acceptable at boundary layers

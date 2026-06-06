@@ -16,8 +16,19 @@ subprojects {
     apply(plugin = "io.gitlab.arturbosch.detekt")
 
     extensions.configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
-        config.setFrom(rootProject.file("config/detekt/detekt.yml"))
-        baseline = rootProject.file("config/detekt/baseline.xml")
+        // ktfmt owns line length; catching Exception and informational TODOs are acceptable
+        config.setFrom(
+            resources.text.fromString(
+                """
+                style:
+                  MaxLineLength:
+                    active: false
+                  ForbiddenComment:
+                    active: false
+                exceptions:
+                  TooGenericExceptionCaught:
+                    active: false
+                """.trimIndent()))
     }
 
     repositories {
