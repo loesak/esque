@@ -16,8 +16,7 @@ subprojects {
     apply(plugin = "io.gitlab.arturbosch.detekt")
 
     extensions.configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
-        config.setFrom(rootProject.file("config/detekt/detekt.yml"))
-        baseline = rootProject.file("config/detekt/baseline.xml")
+        config.setFrom(rootProject.file("detekt.yml"))
     }
 
     repositories {
