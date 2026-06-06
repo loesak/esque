@@ -102,7 +102,7 @@ internal class ElasticsearchDocumentLock(
     try {
       operations.deleteLockRecord()
     } catch (e: Exception) {
-      throw IllegalStateException("Failed to release mutex")
+      error("Failed to release mutex")
     } finally {
       delegate.unlock()
     }

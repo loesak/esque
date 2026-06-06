@@ -29,16 +29,14 @@ internal data class MigrationFile(
     val thatParts = other.metadata.version.split(".")
     val maxParts = maxOf(thisParts.size, thatParts.size)
 
-    for (i in 0 until maxParts) {
-      val thisVal = if (i < thisParts.size) thisParts[i].toInt() else 0
-      val thatVal = if (i < thatParts.size) thatParts[i].toInt() else 0
-      val result = thisVal.compareTo(thatVal)
-      if (result != 0) return result
-    }
-
-    val versionResult = metadata.version.compareTo(other.metadata.version)
-    if (versionResult != 0) return versionResult
-
-    return metadata.description.compareTo(other.metadata.description)
+    return (0 until maxParts)
+        .map { i ->
+          val thisVal = thisParts.getOrElse(i) { "0" }.toInt()
+          val thatVal = thatParts.getOrElse(i) { "0" }.toInt()
+          thisVal.compareTo(thatVal)
+        }
+        .firstOrNull { it != 0 }
+        ?: metadata.version.compareTo(other.metadata.version).takeIf { it != 0 }
+        ?: metadata.description.compareTo(other.metadata.description)
   }
 }

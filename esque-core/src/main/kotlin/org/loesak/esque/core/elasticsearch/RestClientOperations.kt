@@ -42,14 +42,16 @@ internal class RestClientOperations(
       log.info { "Checking if migration index with name [$MIGRATION_DOCUMENT_INDEX] exists" }
       val status =
           sendRequest(Request(HTTP_METHOD_HEAD, MIGRATION_DOCUMENT_INDEX)).statusLine.statusCode ==
-              200
+              HTTP_STATUS_OK
       log.info {
         "Determined migration index with name [$MIGRATION_DOCUMENT_INDEX] ${if (status) "exists" else "does not exist"}"
       }
       status
     } catch (e: Exception) {
       throw IllegalStateException(
-          "Failed to check if migration index with name [$MIGRATION_DOCUMENT_INDEX] exists", e)
+          "Failed to check if migration index with name [$MIGRATION_DOCUMENT_INDEX] exists",
+          e,
+      )
     }
   }
 
@@ -197,7 +199,9 @@ internal class RestClientOperations(
       }
     } catch (e: Exception) {
       throw IllegalStateException(
-          "Failed to get migration records for migration file named [${file.metadata.filename}] and migration key [$migrationKey]")
+          "Failed to get migration records for migration file named [${file.metadata.filename}] and migration key [$migrationKey]",
+          e,
+      )
     }
   }
 
@@ -264,6 +268,7 @@ internal class RestClientOperations(
     private const val FIND_ONE_BY_KEY_AND_FILENAME_QUERY =
         """{"query":{"bool":{"filter":[{"term":{"migration.migrationKey":"%s"}},{"term":{"migration.filename":"%s"}}]}}}"""
 
+    private const val HTTP_STATUS_OK = 200
     private const val HTTP_METHOD_HEAD = "HEAD"
     private const val HTTP_METHOD_GET = "GET"
     private const val HTTP_METHOD_PUT = "PUT"

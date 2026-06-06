@@ -70,39 +70,35 @@ constructor(
   }
 
   private fun verifyStateIntegrity(files: List<MigrationFile>, history: List<MigrationRecord>) {
-    try {
-      log.info { "Verifying integrity of migration state as compared to found migration files" }
+    log.info { "Verifying integrity of migration state as compared to found migration files" }
 
-      if (history.size > files.size) {
-        throw IllegalStateException(
-            "the migration records are showing more migrations than the local system defines. did you refactor your files or use an incorrect migration key?")
-      }
-
-      if (history.isNotEmpty() && history.size != history.last().order + 1) {
-        throw IllegalStateException(
-            "the migration records seem to be corrupt as some records appear to be missing.")
-      }
-
-      history.forEach { record ->
-        val companion =
-            files.firstOrNull { it.metadata.filename == record.filename }
-                ?: throw IllegalStateException(
-                    "could not find migration file matching migration history record by filename [${record.filename}]")
-
-        if (record.order != files.indexOf(companion) ||
-            record.version != companion.metadata.version ||
-            record.description != companion.metadata.description ||
-            record.checksum != companion.metadata.checksum ||
-            record.migrationKey != migrationKey) {
-          throw IllegalStateException(
-              "could not verify integrity of migration history record for filename [${record.filename}]. did you refactor your migration scripts after a previous execution?")
-        }
-      }
-
-      log.info { "Integrity checks passed" }
-    } catch (e: Exception) {
-      throw IllegalStateException("state integrity checks failed", e)
+    check(history.size <= files.size) {
+      "the migration records are showing more migrations than the local system defines. did you refactor your files or use an incorrect migration key?"
     }
+
+    check(history.isEmpty() || history.size == history.last().order + 1) {
+      "the migration records seem to be corrupt as some records appear to be missing."
+    }
+
+    history.forEach { record -> verifyRecordIntegrity(record, files) }
+
+    log.info { "Integrity checks passed" }
+  }
+
+  private fun verifyRecordIntegrity(record: MigrationRecord, files: List<MigrationFile>) {
+    val companion =
+        files.firstOrNull { it.metadata.filename == record.filename }
+            ?: error(
+                "could not find migration file matching migration history record by filename [${record.filename}]")
+
+    check(
+        record.order == files.indexOf(companion) &&
+            record.version == companion.metadata.version &&
+            record.description == companion.metadata.description &&
+            record.checksum == companion.metadata.checksum &&
+            record.migrationKey == migrationKey) {
+          "could not verify integrity of migration history record for filename [${record.filename}]. did you refactor your migration scripts after a previous execution?"
+        }
   }
 
   private fun runMigrations(files: List<MigrationFile>) {
@@ -111,7 +107,7 @@ constructor(
         try {
           log.info { "Attempting to acquire lock for execution" }
 
-          if (lock.tryLock(5, TimeUnit.MINUTES)) {
+          if (lock.tryLock(LOCK_TIMEOUT_MINUTES, TimeUnit.MINUTES)) {
             log.info {
               "Lock acquired. Executing queries defined in migration file [${file.metadata.filename}]"
             }
@@ -149,7 +145,7 @@ constructor(
             log.error {
               "Failed to acquire lock in the allotted time period. Did a lock not get cleared as part of a previous execution?"
             }
-            throw IllegalStateException("failed to acquire lock")
+            error("failed to acquire lock")
           }
         } catch (e: Exception) {
           throw RuntimeException(
@@ -188,5 +184,9 @@ constructor(
     log.info {
       "Execution complete for queries defined in migration file [${file.metadata.filename}]"
     }
+  }
+
+  companion object {
+    private const val LOCK_TIMEOUT_MINUTES = 5L
   }
 }
