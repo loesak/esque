@@ -22,6 +22,12 @@ esque/
 │   └── wrapper/                     # Gradle wrapper (9.5.1)
 ├── gradlew / gradlew.bat            # Gradle wrapper scripts
 ├── version.sh                       # Git-tag-based version calculation
+├── setup-hooks.sh                   # One-time dev setup: activates git pre-commit hook
+├── .githooks/
+│   └── pre-commit                   # Runs ktfmtCheck + detekt + test before each commit
+├── config/detekt/
+│   ├── detekt.yml                   # Detekt rule configuration
+│   └── baseline.xml                 # Baseline of pre-existing violations
 ├── .github/workflows/
 │   ├── maven-deploy.yml             # CI/CD: Maven build + deploy to Maven Central
 │   └── gradle-deploy.yml            # CI/CD: Gradle build + deploy to Maven Central
@@ -55,6 +61,16 @@ esque/
 - Java 21 (Zulu distribution recommended)
 - Maven 3.9+ or Gradle (wrapper included — no install needed)
 
+### First-time setup
+
+After cloning, activate the pre-commit hook:
+
+```bash
+./setup-hooks.sh
+```
+
+This sets `core.hooksPath = .githooks` in your local git config. Git won't do this automatically (by design — executing scripts on clone is a security risk).
+
 ### Common Commands
 
 ```bash
@@ -75,6 +91,12 @@ mvn clean install -Dgpg.skip=true
 
 # Gradle — pass version explicitly (mirrors version.sh output)
 ./gradlew -PprojectVersion=1.0.0-SNAPSHOT build
+
+# Gradle — format code
+./gradlew ktfmtFormat
+
+# Gradle — check formatting and lint (without building)
+./gradlew ktfmtCheck detekt
 ```
 
 ### GPG Signing
@@ -92,12 +114,18 @@ Version is derived from git tags via `version.sh`:
 **Maven CI:** `mvn versions:set -DnewVersion=$(./version.sh)` before building.
 **Gradle CI:** `-PprojectVersion=$(./version.sh)` passed on the command line.
 
+### Code Style and Linting
+
+- **Formatting**: [ktfmt](https://github.com/facebook/ktfmt) via `com.ncorti.ktfmt.gradle`. Run `./gradlew ktfmtFormat` to auto-format. CI fails on unformatted code.
+- **Linting**: [detekt](https://detekt.dev/) via `io.gitlab.arturbosch.detekt`. Config in `config/detekt/detekt.yml`. Existing violations are baselined in `config/detekt/baseline.xml` — new violations fail the build. Run `./gradlew detektBaseline` to regenerate the baseline after intentionally fixing or accepting violations.
+- Disabled rules: `MaxLineLength` (ktfmt owns this), `TooGenericExceptionCaught` (too strict at boundary layers), `ForbiddenComment` (informational TODOs are tracked as known issues).
+
 ### CI/CD
 
 Two GitHub Actions workflows trigger on push to `master`, pull requests to `master`, and GitHub releases:
 
 - **`maven-deploy.yml`** — runs `mvn clean deploy`; signs with GPG via `maven-gpg-plugin`
-- **`gradle-deploy.yml`** — runs `./gradlew build` then `./gradlew publish -x test`; signs in-memory via vanniktech
+- **`gradle-deploy.yml`** — runs `./gradlew ktfmtCheck detekt build` then `./gradlew publish -x test`; signs in-memory via vanniktech
 
 Both workflows attempt SNAPSHOT publishing on every run. SNAPSHOT publishing requires the namespace to have snapshots enabled at central.sonatype.com.
 
