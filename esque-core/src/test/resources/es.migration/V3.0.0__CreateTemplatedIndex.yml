@@ -1,0 +1,5 @@
+---
+requests:
+  - method: "PUT"
+    path: "/#{templatedIndexName}"
+    contentType: application/json; charset=utf-8

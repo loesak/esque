@@ -10,7 +10,7 @@ class MigrationFileLoaderIT {
   @Test
   fun load_discoversAllMigrationFiles() {
     val files = loader.load()
-    assertThat(files).hasSize(3)
+    assertThat(files).hasSize(4)
   }
 
   @Test
@@ -19,6 +19,7 @@ class MigrationFileLoaderIT {
     assertThat(files[0].metadata.version).isEqualTo("1.0.0")
     assertThat(files[1].metadata.version).isEqualTo("1.1.0")
     assertThat(files[2].metadata.version).isEqualTo("2.0.0")
+    assertThat(files[3].metadata.version).isEqualTo("3.0.0")
   }
 
   @Test
@@ -38,6 +39,10 @@ class MigrationFileLoaderIT {
     val third = files[2]
     assertThat(third.metadata.filename).isEqualTo("V2.0.0__CreateThirdIndex.yml")
     assertThat(third.metadata.description).isEqualTo("CreateThirdIndex")
+
+    val fourth = files[3]
+    assertThat(fourth.metadata.filename).isEqualTo("V3.0.0__CreateTemplatedIndex.yml")
+    assertThat(fourth.metadata.description).isEqualTo("CreateTemplatedIndex")
   }
 
   @Test
