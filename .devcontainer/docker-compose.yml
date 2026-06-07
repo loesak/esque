@@ -8,7 +8,7 @@ services:
     volumes:
       - jbdevcontainer:/.jbdevcontainer
       - ${HOME}/.ssh:/home/ubuntu/.ssh
-      - ${HOME}/.gitconfig:/home/ubuntu/.gitconfig
+      - ${HOME}/.claude:/home/ubuntu/.claude
     command: sleep infinity
 
 volumes:
