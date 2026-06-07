@@ -27,13 +27,19 @@ internal class MigrationTemplateResolver(private val properties: Map<String, Str
   fun resolve(
       definition: MigrationFile.MigrationFileRequestDefinition
   ): MigrationFile.MigrationFileRequestDefinition =
+      // method, contentType, and params are intentionally not substituted — only path and body
       definition.copy(
           path = substitute(definition.path),
           body = definition.body?.let { substitute(it) },
       )
 
   private fun substitute(text: String): String =
-      PLACEHOLDER_PATTERN.replace(text) { properties.getValue(it.groupValues[1]) }
+      PLACEHOLDER_PATTERN.replace(text) { match ->
+        val key = match.groupValues[1]
+        properties[key]
+            ?: throw IllegalStateException(
+                "unresolved template variable '#{$key}' — was validate() called?")
+      }
 
   companion object {
     private val PLACEHOLDER_PATTERN = Regex("""#\{([a-zA-Z0-9._\-]+)}""")
