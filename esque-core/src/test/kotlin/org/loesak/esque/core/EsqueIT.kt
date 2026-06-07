@@ -118,6 +118,24 @@ class EsqueIT : AbstractElasticsearchIT() {
     }
   }
 
+  @Test
+  fun execute_withPropertiesAndNoPlaceholdersInFiles_succeedsAndIgnoresExtraProperties() {
+    createRestClient().use { client ->
+      Esque(client, "extra-properties-test", null, mapOf("unused" to "value")).execute()
+      assertIndexExists(client, "/test-index-v1")
+    }
+  }
+
+  @Test
+  fun execute_withEmptyPropertiesAndNoPlaceholdersInFiles_behavesIdenticallyToNoPropertiesArg() {
+    val migrationKey = "empty-properties-test"
+    createRestClient().use { client ->
+      Esque(client, migrationKey, null, emptyMap()).execute()
+      val records = RestClientOperations(client, migrationKey).getMigrationRecords()
+      assertThat(records).hasSize(3)
+    }
+  }
+
   private fun assertIndexExists(client: org.elasticsearch.client.RestClient, indexPath: String) {
     val response = client.performRequest(Request("HEAD", indexPath))
     assertThat(response.statusLine.statusCode).isEqualTo(200)

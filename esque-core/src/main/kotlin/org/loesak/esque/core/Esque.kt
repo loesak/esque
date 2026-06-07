@@ -11,6 +11,7 @@ import org.loesak.esque.core.concurrent.ElasticsearchDocumentLock
 import org.loesak.esque.core.elasticsearch.RestClientOperations
 import org.loesak.esque.core.elasticsearch.documents.MigrationRecord
 import org.loesak.esque.core.yaml.MigrationFileLoader
+import org.loesak.esque.core.yaml.MigrationTemplateResolver
 import org.loesak.esque.core.yaml.model.MigrationFile
 
 private val log = KotlinLogging.logger {}
@@ -21,9 +22,11 @@ constructor(
     client: RestClient,
     private val migrationKey: String,
     private val migrationUser: String? = null,
+    private val properties: Map<String, String> = emptyMap(),
 ) : Closeable {
 
   private val migrationLoader = MigrationFileLoader()
+  private val templateResolver = MigrationTemplateResolver(properties)
   private val operations = RestClientOperations(client, migrationKey)
   private val lock: Lock = ElasticsearchDocumentLock(operations)
 
@@ -51,6 +54,8 @@ constructor(
       initialize()
 
       val files = migrationLoader.load()
+      templateResolver.validate(files)
+
       val history = operations.getMigrationRecords()
 
       verifyStateIntegrity(files, history)
@@ -141,7 +146,7 @@ constructor(
             }
           } else {
             // TODO: this could happen for long running queries. need to look for something a bit
-            // smarter or allow to be configurable
+            //   smarter or allow to be configurable
             log.error {
               "Failed to acquire lock in the allotted time period. Did a lock not get cleared as part of a previous execution?"
             }
@@ -170,7 +175,8 @@ constructor(
         log.info {
           "Executing query in position [$position] defined in migration file [${file.metadata.filename}]"
         }
-        operations.executeMigrationDefinition(definition)
+        val resolved = templateResolver.resolve(definition)
+        operations.executeMigrationDefinition(resolved)
         log.info {
           "Query in position [$position] defined in migration file [${file.metadata.filename}] executed successfully"
         }
