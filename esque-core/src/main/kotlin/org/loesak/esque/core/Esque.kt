@@ -22,7 +22,7 @@ constructor(
     client: RestClient,
     private val migrationKey: String,
     private val migrationUser: String? = null,
-    private val properties: Map<String, String> = emptyMap(),
+    properties: Map<String, String> = emptyMap(),
 ) : Closeable {
 
   private val migrationLoader = MigrationFileLoader()
@@ -146,7 +146,7 @@ constructor(
             }
           } else {
             // TODO: this could happen for long running queries. need to look for something a bit
-            //   smarter or allow to be configurable
+            // smarter or allow to be configurable
             log.error {
               "Failed to acquire lock in the allotted time period. Did a lock not get cleared as part of a previous execution?"
             }
