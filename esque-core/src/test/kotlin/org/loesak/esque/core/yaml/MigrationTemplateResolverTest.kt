@@ -85,6 +85,16 @@ class MigrationTemplateResolverTest {
     resolver.validate(listOf(makeFile(makeDefinition("/plain"))))
   }
 
+  @Test
+  fun validate_missingVariableInParamsValue_throwsWithVariableName() {
+    assertThatThrownBy {
+          MigrationTemplateResolver(emptyMap())
+              .validate(listOf(makeFile(makeDefinition(params = mapOf("key" to "#{missingVar}")))))
+        }
+        .isInstanceOf(IllegalStateException::class.java)
+        .hasMessageContaining("missingVar")
+  }
+
   // --- resolve ---
 
   @Test

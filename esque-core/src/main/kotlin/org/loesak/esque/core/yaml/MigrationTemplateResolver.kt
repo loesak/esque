@@ -11,7 +11,12 @@ internal class MigrationTemplateResolver(private val properties: Map<String, Str
             .flatMap { definition ->
               buildList {
                 addAll(PLACEHOLDER_PATTERN.findAll(definition.path).map { it.groupValues[1] })
-                // TODO: add params
+                definition.contentType?.let {
+                  addAll(PLACEHOLDER_PATTERN.findAll(it).map { m -> m.groupValues[1] })
+                }
+                definition.params?.values?.forEach { v ->
+                  addAll(PLACEHOLDER_PATTERN.findAll(v).map { m -> m.groupValues[1] })
+                }
                 definition.body?.let {
                   addAll(PLACEHOLDER_PATTERN.findAll(it).map { m -> m.groupValues[1] })
                 }
