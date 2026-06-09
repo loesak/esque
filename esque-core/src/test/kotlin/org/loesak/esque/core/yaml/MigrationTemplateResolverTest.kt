@@ -95,6 +95,17 @@ class MigrationTemplateResolverTest {
         .hasMessageContaining("missingVar")
   }
 
+  @Test
+  fun validate_missingVariableInContentType_throwsWithVariableName() {
+    assertThatThrownBy {
+          MigrationTemplateResolver(emptyMap())
+              .validate(
+                  listOf(makeFile(makeDefinition(contentType = "application/#{missingType}"))))
+        }
+        .isInstanceOf(IllegalStateException::class.java)
+        .hasMessageContaining("missingType")
+  }
+
   // --- resolve ---
 
   @Test
@@ -172,5 +183,31 @@ class MigrationTemplateResolverTest {
         MigrationTemplateResolver(mapOf("cluster.index-suffix" to "prod"))
             .resolve(makeDefinition("/#{cluster.index-suffix}"))
     assertThat(resolved.path).isEqualTo("/prod")
+  }
+
+  // --- resolveContents ---
+
+  @Test
+  fun resolveContents_substitutesAllRequestsInContents() {
+    val contents =
+        MigrationFile.MigrationFileContents(
+            requests =
+                listOf(
+                    makeDefinition("/#{prefix}-index", body = """{"replicas":#{count}}"""),
+                    makeDefinition("/#{prefix}-alias"),
+                ))
+    val resolved =
+        MigrationTemplateResolver(mapOf("prefix" to "prod", "count" to "3"))
+            .resolveContents(contents)
+    assertThat(resolved.requests[0].path).isEqualTo("/prod-index")
+    assertThat(resolved.requests[0].body).isEqualTo("""{"replicas":3}""")
+    assertThat(resolved.requests[1].path).isEqualTo("/prod-alias")
+  }
+
+  @Test
+  fun resolveContents_emptyRequests_returnsEmptyContents() {
+    val contents = MigrationFile.MigrationFileContents(requests = emptyList())
+    val resolved = MigrationTemplateResolver(emptyMap()).resolveContents(contents)
+    assertThat(resolved.requests).isEmpty()
   }
 }

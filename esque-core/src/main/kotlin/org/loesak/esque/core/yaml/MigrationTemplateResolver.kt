@@ -41,7 +41,7 @@ internal class MigrationTemplateResolver(private val properties: Map<String, Str
           body = definition.body?.let { substitute(it) },
       )
 
-  internal fun resolveContents(
+  fun resolveContents(
       contents: MigrationFile.MigrationFileContents
   ): MigrationFile.MigrationFileContents =
       contents.copy(requests = contents.requests.map { resolve(it) })
