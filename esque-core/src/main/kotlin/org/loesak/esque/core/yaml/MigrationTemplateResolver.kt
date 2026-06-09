@@ -11,6 +11,7 @@ internal class MigrationTemplateResolver(private val properties: Map<String, Str
             .flatMap { definition ->
               buildList {
                 addAll(PLACEHOLDER_PATTERN.findAll(definition.path).map { it.groupValues[1] })
+                // TODO: add params
                 definition.body?.let {
                   addAll(PLACEHOLDER_PATTERN.findAll(it).map { m -> m.groupValues[1] })
                 }
@@ -27,11 +28,18 @@ internal class MigrationTemplateResolver(private val properties: Map<String, Str
   fun resolve(
       definition: MigrationFile.MigrationFileRequestDefinition
   ): MigrationFile.MigrationFileRequestDefinition =
-      // method, contentType, and params are intentionally not substituted — only path and body
+      // method is intentionally not substituted
       definition.copy(
           path = substitute(definition.path),
+          contentType = definition.contentType?.let { substitute(it) },
+          params = definition.params?.mapValues { (_, v) -> substitute(v) },
           body = definition.body?.let { substitute(it) },
       )
+
+  internal fun resolveContents(
+      contents: MigrationFile.MigrationFileContents
+  ): MigrationFile.MigrationFileContents =
+      contents.copy(requests = contents.requests.map { resolve(it) })
 
   private fun substitute(text: String): String =
       PLACEHOLDER_PATTERN.replace(text) { match ->

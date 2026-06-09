@@ -12,9 +12,10 @@ class MigrationTemplateResolverTest {
       body: String? = null,
       method: String = "PUT",
       contentType: String? = null,
+      params: Map<String, String>? = null,
   ) =
       MigrationFile.MigrationFileRequestDefinition(
-          method = method, path = path, body = body, contentType = contentType)
+          method = method, path = path, body = body, contentType = contentType, params = params)
 
   private fun makeFile(
       vararg definitions: MigrationFile.MigrationFileRequestDefinition
@@ -124,11 +125,28 @@ class MigrationTemplateResolverTest {
   }
 
   @Test
-  fun resolve_doesNotSubstituteInContentType() {
+  fun resolve_substitutesPlaceholderInContentType() {
     val resolved =
-        MigrationTemplateResolver(mapOf("x" to "replaced"))
-            .resolve(makeDefinition(contentType = "application/#{x}"))
-    assertThat(resolved.contentType).isEqualTo("application/#{x}")
+        MigrationTemplateResolver(mapOf("type" to "json"))
+            .resolve(makeDefinition(contentType = "application/#{type}"))
+    assertThat(resolved.contentType).isEqualTo("application/json")
+  }
+
+  @Test
+  fun resolve_substitutesPlaceholderInParamsValues() {
+    val resolved =
+        MigrationTemplateResolver(mapOf("size" to "100"))
+            .resolve(makeDefinition(params = mapOf("size" to "#{size}", "format" to "json")))
+    assertThat(resolved.params).containsEntry("size", "100")
+    assertThat(resolved.params).containsEntry("format", "json")
+  }
+
+  @Test
+  fun resolve_doesNotSubstituteParamsKeys() {
+    val resolved =
+        MigrationTemplateResolver(mapOf("key" to "replaced"))
+            .resolve(makeDefinition(params = mapOf("#{key}" to "value")))
+    assertThat(resolved.params).containsKey("#{key}")
   }
 
   @Test
