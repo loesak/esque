@@ -54,7 +54,6 @@ constructor(
       initialize()
 
       val files = migrationLoader.load()
-      templateResolver.validate(files)
 
       val history = operations.getMigrationRecords()
 
@@ -175,8 +174,7 @@ constructor(
         log.info {
           "Executing query in position [$position] defined in migration file [${file.metadata.filename}]"
         }
-        val resolved = templateResolver.resolve(definition)
-        operations.executeMigrationDefinition(resolved)
+        operations.executeMigrationDefinition(definition)
         log.info {
           "Query in position [$position] defined in migration file [${file.metadata.filename}] executed successfully"
         }
