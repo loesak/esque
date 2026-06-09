@@ -1,11 +1,13 @@
 package org.loesak.esque.core.yaml
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class MigrationFileLoaderIT {
 
-  private val loader = MigrationFileLoader()
+  private val resolver = MigrationTemplateResolver(mapOf("templatedIndexName" to "test-index-v4"))
+  private val loader = MigrationFileLoader(resolver)
 
   @Test
   fun load_discoversAllMigrationFiles() {
@@ -74,5 +76,20 @@ class MigrationFileLoaderIT {
     for (i in first.indices) {
       assertThat(first[i].metadata.checksum).isEqualTo(second[i].metadata.checksum)
     }
+  }
+
+  @Test
+  fun load_templateVariablesResolvedInReturnedFiles() {
+    val files = loader.load()
+    val templatedFile = files[3]
+    assertThat(templatedFile.contents.requests[0].path).isEqualTo("/test-index-v4")
+  }
+
+  @Test
+  fun load_withMissingTemplateVariable_throwsListingAllMissingNames() {
+    val loaderWithEmptyProps = MigrationFileLoader(MigrationTemplateResolver(emptyMap()))
+    assertThatThrownBy { loaderWithEmptyProps.load() }
+        .isInstanceOf(IllegalStateException::class.java)
+        .hasMessageContaining("templatedIndexName")
   }
 }

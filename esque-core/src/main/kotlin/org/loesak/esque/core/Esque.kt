@@ -25,8 +25,8 @@ constructor(
     properties: Map<String, String> = emptyMap(),
 ) : Closeable {
 
-  private val migrationLoader = MigrationFileLoader()
   private val templateResolver = MigrationTemplateResolver(properties)
+  private val migrationLoader = MigrationFileLoader(templateResolver)
   private val operations = RestClientOperations(client, migrationKey)
   private val lock: Lock = ElasticsearchDocumentLock(operations)
 

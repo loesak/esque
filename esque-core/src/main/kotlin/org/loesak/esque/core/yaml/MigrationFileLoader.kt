@@ -7,17 +7,20 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.MessageDigest
 import org.loesak.esque.core.yaml.model.MigrationFile
+import tools.jackson.databind.SerializationFeature
 import tools.jackson.dataformat.yaml.YAMLMapper
 import tools.jackson.module.kotlin.KotlinModule
 
 private val log = KotlinLogging.logger {}
 
-internal class MigrationFileLoader {
+internal class MigrationFileLoader(
+    private val templateResolver: MigrationTemplateResolver = MigrationTemplateResolver(emptyMap()),
+) {
 
   fun load(): List<MigrationFile> {
     log.info { "Loading migration files from [$MIGRATION_DEFINITION_DIRECTORY]" }
 
-    val files =
+    val rawFiles =
         Files.list(
                 Paths.get(
                     checkNotNull(
@@ -27,13 +30,21 @@ internal class MigrationFileLoader {
                         .toURI()))
             .filter(Files::isRegularFile)
             .filter { FILE_NAME_PATTERN.matches(it.toFile().name) }
-            .map { read(it) }
+            .map { readRaw(it) }
             .sorted()
             .toList()
 
-    log.info { "Found [${files.size}] migration files" }
+    log.info { "Found [${rawFiles.size}] migration files" }
 
-    return files
+    templateResolver.validate(rawFiles)
+
+    return rawFiles.map { file ->
+      val resolvedContents = templateResolver.resolveContents(file.contents)
+      file.copy(
+          metadata = file.metadata.copy(checksum = calculateChecksum(resolvedContents)),
+          contents = resolvedContents,
+      )
+    }
   }
 
   companion object {
@@ -42,9 +53,14 @@ internal class MigrationFileLoader {
     private val FILE_NAME_PATTERN = Regex(MIGRATION_DEFINITION_FILE_NAME_REGEX)
 
     private val YAML_MAPPER = YAMLMapper.builder().addModule(KotlinModule.Builder().build()).build()
+    private val YAML_MAPPER_SORTED =
+        YAMLMapper.builder()
+            .addModule(KotlinModule.Builder().build())
+            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
+            .build()
     private val MESSAGE_DIGEST: MessageDigest = MessageDigest.getInstance("MD5")
 
-    private fun read(path: Path): MigrationFile {
+    private fun readRaw(path: Path): MigrationFile {
       val filename = path.toFile().name
       log.info { "Reading contents of migration file [$filename]" }
 
@@ -59,20 +75,22 @@ internal class MigrationFileLoader {
                     filename = filename,
                     version = match.groupValues[1],
                     description = match.groupValues[3],
-                    checksum = calculateChecksum(path),
+                    checksum = 0,
                 ),
             contents =
                 YAML_MAPPER.readValue(
-                    Files.newInputStream(path), MigrationFile.MigrationFileContents::class.java),
+                    Files.newInputStream(path),
+                    MigrationFile.MigrationFileContents::class.java,
+                ),
         )
       } catch (e: Exception) {
         throw RuntimeException("failed to read the contents of migration file [$filename]", e)
       }
     }
 
-    private fun calculateChecksum(path: Path): Int {
+    internal fun calculateChecksum(contents: MigrationFile.MigrationFileContents): Int {
       MESSAGE_DIGEST.reset()
-      MESSAGE_DIGEST.update(Files.readAllBytes(path))
+      MESSAGE_DIGEST.update(YAML_MAPPER_SORTED.writeValueAsBytes(contents))
       return ByteBuffer.wrap(MESSAGE_DIGEST.digest()).int
     }
   }
