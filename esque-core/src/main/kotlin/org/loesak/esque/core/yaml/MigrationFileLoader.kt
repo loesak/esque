@@ -58,7 +58,6 @@ internal class MigrationFileLoader(
             .addModule(KotlinModule.Builder().build())
             .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
             .build()
-    private val MESSAGE_DIGEST: MessageDigest = MessageDigest.getInstance("MD5")
 
     private fun readRaw(path: Path): MigrationFile {
       val filename = path.toFile().name
@@ -78,10 +77,9 @@ internal class MigrationFileLoader(
                     checksum = 0,
                 ),
             contents =
-                YAML_MAPPER.readValue(
-                    Files.newInputStream(path),
-                    MigrationFile.MigrationFileContents::class.java,
-                ),
+                Files.newInputStream(path).use { stream ->
+                  YAML_MAPPER.readValue(stream, MigrationFile.MigrationFileContents::class.java)
+                },
         )
       } catch (e: Exception) {
         throw RuntimeException("failed to read the contents of migration file [$filename]", e)
@@ -89,9 +87,9 @@ internal class MigrationFileLoader(
     }
 
     internal fun calculateChecksum(contents: MigrationFile.MigrationFileContents): Int {
-      MESSAGE_DIGEST.reset()
-      MESSAGE_DIGEST.update(YAML_MAPPER_SORTED.writeValueAsBytes(contents))
-      return ByteBuffer.wrap(MESSAGE_DIGEST.digest()).int
+      val digest = MessageDigest.getInstance("MD5")
+      digest.update(YAML_MAPPER_SORTED.writeValueAsBytes(contents))
+      return ByteBuffer.wrap(digest.digest()).int
     }
   }
 }

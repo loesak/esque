@@ -32,7 +32,7 @@ class MigrationFileLoaderIT {
     assertThat(first.metadata.filename).isEqualTo("V1.0.0__CreateTestIndex.yml")
     assertThat(first.metadata.version).isEqualTo("1.0.0")
     assertThat(first.metadata.description).isEqualTo("CreateTestIndex")
-    assertThat(first.metadata.checksum).isNotNull()
+    assertThat(first.metadata.checksum).isNotEqualTo(0)
 
     val second = files[1]
     assertThat(second.metadata.filename).isEqualTo("V1.1.0__CreateSecondIndex.yml")
@@ -51,7 +51,7 @@ class MigrationFileLoaderIT {
   fun load_calculatesChecksums() {
     val files = loader.load()
     for (file in files) {
-      assertThat(file.metadata.checksum).isNotNull()
+      assertThat(file.metadata.checksum).isNotEqualTo(0)
     }
     assertThat(files[0].metadata.checksum).isNotEqualTo(files[1].metadata.checksum)
   }

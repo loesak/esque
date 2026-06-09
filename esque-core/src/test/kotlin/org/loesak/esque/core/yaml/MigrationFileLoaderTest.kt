@@ -21,9 +21,10 @@ class MigrationFileLoaderTest {
 
   @Test
   fun calculateChecksum_sameContents_sameChecksum() {
-    val c = contents(req(path = "/index-v1", contentType = "application/json; charset=utf-8"))
-    assertThat(MigrationFileLoader.calculateChecksum(c))
-        .isEqualTo(MigrationFileLoader.calculateChecksum(c))
+    val c1 = contents(req(path = "/index-v1", contentType = "application/json; charset=utf-8"))
+    val c2 = contents(req(path = "/index-v1", contentType = "application/json; charset=utf-8"))
+    assertThat(MigrationFileLoader.calculateChecksum(c1))
+        .isEqualTo(MigrationFileLoader.calculateChecksum(c2))
   }
 
   @Test
