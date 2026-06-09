@@ -41,6 +41,7 @@ internal class MigrationTemplateResolver(private val properties: Map<String, Str
           body = definition.body?.let { substitute(it) },
       )
 
+  // called by MigrationFileLoader during load() to resolve all requests before checksum computation
   fun resolveContents(
       contents: MigrationFile.MigrationFileContents
   ): MigrationFile.MigrationFileContents =

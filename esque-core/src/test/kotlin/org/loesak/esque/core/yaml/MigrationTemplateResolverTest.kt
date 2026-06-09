@@ -1,6 +1,7 @@
 package org.loesak.esque.core.yaml
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.loesak.esque.core.yaml.model.MigrationFile
@@ -104,6 +105,18 @@ class MigrationTemplateResolverTest {
         }
         .isInstanceOf(IllegalStateException::class.java)
         .hasMessageContaining("missingType")
+  }
+
+  @Test
+  fun validate_placeholderInParamsKey_isPermitted() {
+    // params keys are structural and never substituted — placeholders in keys pass through as
+    // literals
+    assertThatCode {
+          MigrationTemplateResolver(emptyMap())
+              .validate(
+                  listOf(makeFile(makeDefinition(params = mapOf("#{ignoredKey}" to "value")))))
+        }
+        .doesNotThrowAnyException()
   }
 
   // --- resolve ---
