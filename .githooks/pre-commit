@@ -1,6 +1,13 @@
 #!/bin/sh
 set -e
 
+# Git hooks don't inherit shell profiles, so JAVA_HOME may be unset.
+# Fall back to SDKMAN's current Java if available.
+if [ -z "$JAVA_HOME" ] && [ -d "$HOME/.sdkman/candidates/java/current" ]; then
+    export JAVA_HOME="$HOME/.sdkman/candidates/java/current"
+    export PATH="$JAVA_HOME/bin:$PATH"
+fi
+
 echo "Running pre-commit checks..."
 
 ./gradlew ktfmtCheck detekt test

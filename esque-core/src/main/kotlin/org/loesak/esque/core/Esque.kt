@@ -11,6 +11,7 @@ import org.loesak.esque.core.concurrent.ElasticsearchDocumentLock
 import org.loesak.esque.core.elasticsearch.RestClientOperations
 import org.loesak.esque.core.elasticsearch.documents.MigrationRecord
 import org.loesak.esque.core.yaml.MigrationFileLoader
+import org.loesak.esque.core.yaml.MigrationTemplateResolver
 import org.loesak.esque.core.yaml.model.MigrationFile
 
 private val log = KotlinLogging.logger {}
@@ -21,9 +22,10 @@ constructor(
     client: RestClient,
     private val migrationKey: String,
     private val migrationUser: String? = null,
+    properties: Map<String, String> = emptyMap(),
 ) : Closeable {
 
-  private val migrationLoader = MigrationFileLoader()
+  private val migrationLoader = MigrationFileLoader(MigrationTemplateResolver(properties))
   private val operations = RestClientOperations(client, migrationKey)
   private val lock: Lock = ElasticsearchDocumentLock(operations)
 
@@ -51,6 +53,7 @@ constructor(
       initialize()
 
       val files = migrationLoader.load()
+
       val history = operations.getMigrationRecords()
 
       verifyStateIntegrity(files, history)
