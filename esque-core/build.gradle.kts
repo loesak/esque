@@ -26,8 +26,7 @@ mavenPublishing {
   // https://central.sonatype.com/repository/maven-snapshots/ automatically.
   // Requires snapshots to be enabled for the namespace on central.sonatype.com.
   publishToMavenCentral()
-  if (providers.gradleProperty("signingInPlaceKey").isPresent ||
-      providers.environmentVariable("ORG_GRADLE_PROJECT_signingInPlaceKey").isPresent) {
+  if (providers.gradleProperty("signingInMemoryKey").orNull?.isNotBlank() == true) {
     signAllPublications()
   }
 
