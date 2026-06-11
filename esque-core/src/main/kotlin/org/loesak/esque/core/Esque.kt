@@ -20,13 +20,13 @@ class Esque
 @JvmOverloads
 constructor(
     client: RestClient,
-    private val migrationKey: String,
-    private val migrationUser: String? = null,
+    private val configuration: EsqueConfiguration,
     properties: Map<String, String> = emptyMap(),
 ) : Closeable {
 
-  private val migrationLoader = MigrationFileLoader(MigrationTemplateResolver(properties))
-  private val operations = RestClientOperations(client, migrationKey)
+  private val migrationLoader =
+      MigrationFileLoader(configuration.migrationDirectory, MigrationTemplateResolver(properties))
+  private val operations = RestClientOperations(client, configuration.migrationKey)
   private val lock: Lock = ElasticsearchDocumentLock(operations)
 
   override fun close() {
@@ -99,7 +99,7 @@ constructor(
             record.version == companion.metadata.version &&
             record.description == companion.metadata.description &&
             record.checksum == companion.metadata.checksum &&
-            record.migrationKey == migrationKey) {
+            record.migrationKey == configuration.migrationKey) {
           "could not verify integrity of migration history record for filename [${record.filename}]. did you refactor your migration scripts after a previous execution?"
         }
   }
@@ -110,14 +110,15 @@ constructor(
         try {
           log.info { "Attempting to acquire lock for execution" }
 
-          if (lock.tryLock(LOCK_TIMEOUT_MINUTES, TimeUnit.MINUTES)) {
+          if (lock.tryLock(configuration.lockTimeoutMinutes, TimeUnit.MINUTES)) {
             log.info {
               "Lock acquired. Executing queries defined in migration file [${file.metadata.filename}]"
             }
 
-            if (operations.getMigrationRecordForMigrationFile(file, migrationKey) != null) {
+            if (operations.getMigrationRecordForMigrationFile(file, configuration.migrationKey) !=
+                null) {
               log.info {
-                "Migration for migration file [${file.metadata.filename}] and migration key [$migrationKey] appears to already have been executed. Skipping"
+                "Migration for migration file [${file.metadata.filename}] and migration key [${configuration.migrationKey}] appears to already have been executed. Skipping"
               }
             } else {
               val start = Instant.now()
@@ -131,13 +132,13 @@ constructor(
 
               operations.createMigrationRecord(
                   MigrationRecord(
-                      migrationKey = migrationKey,
+                      migrationKey = configuration.migrationKey,
                       order = files.indexOf(file),
                       filename = file.metadata.filename,
                       version = file.metadata.version,
                       description = file.metadata.description,
                       checksum = file.metadata.checksum,
-                      installedBy = migrationUser,
+                      installedBy = configuration.migrationUser,
                       installedOn = end,
                       executionTime = duration,
                   ))
@@ -187,9 +188,5 @@ constructor(
     log.info {
       "Execution complete for queries defined in migration file [${file.metadata.filename}]"
     }
-  }
-
-  companion object {
-    private const val LOCK_TIMEOUT_MINUTES = 5L
   }
 }
