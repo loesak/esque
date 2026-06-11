@@ -10,7 +10,7 @@ Specs live in `.claude/superpowers/specs/` named `YYYY-MM-DD-<topic>-design.md`.
 
 - **License:** Apache 2.0
 - **Language:** Kotlin 2.4.0 (JVM 21)
-- **Build:** Maven 3.9+ and Gradle 9.5.1 (both supported)
+- **Build:** Gradle 9.5.1
 - **Target:** Elasticsearch 9+ (client version 9.4.x low-level REST client)
 - **Published to:** Maven Central via Central Portal
 
@@ -18,7 +18,6 @@ Specs live in `.claude/superpowers/specs/` named `YYYY-MM-DD-<topic>-design.md`.
 
 ```
 esque/
-├── pom.xml                          # Parent POM (multi-module Maven build)
 ├── build.gradle.kts                 # Root Gradle build
 ├── settings.gradle.kts              # Gradle settings (module declarations)
 ├── gradle/
@@ -33,11 +32,9 @@ esque/
 │   ├── detekt.yml                   # Detekt rule configuration
 │   └── baseline.xml                 # Baseline of pre-existing violations
 ├── .github/workflows/
-│   ├── maven-deploy.yml             # CI/CD: Maven build + deploy to Maven Central
 │   └── gradle-deploy.yml            # CI/CD: Gradle build + deploy to Maven Central
-├── .devcontainer/                   # Dev container (Ubuntu, Zulu JDK 21, Maven 3.9)
+├── .devcontainer/                   # Dev container (Ubuntu, Zulu JDK 21)
 ├── esque-core/                      # Core library (the published artifact)
-│   ├── pom.xml
 │   ├── build.gradle.kts
 │   └── src/main/kotlin/org/loesak/esque/core/
 │       ├── Esque.kt                 # Main entry point / orchestrator
@@ -63,7 +60,7 @@ esque/
 ### Prerequisites
 
 - Java 21 (Zulu distribution recommended)
-- Maven 3.9+ or Gradle (wrapper included — no install needed)
+- Gradle (wrapper included — no install needed)
 
 ### First-time setup
 
@@ -78,36 +75,25 @@ This sets `core.hooksPath = .githooks` in your local git config. Git won't do th
 ### Common Commands
 
 ```bash
-# Maven — compile
-mvn clean compile
-
-# Maven — package (skip GPG signing for local dev)
-mvn clean package -Dgpg.skip=true
-
-# Maven — install to local repo
-mvn clean install -Dgpg.skip=true
-
-# Gradle — compile
+# compile
 ./gradlew compileKotlin
 
-# Gradle — build (compile + test)
+# build (compile + test)
 ./gradlew build
 
-# Gradle — pass version explicitly (mirrors version.sh output)
+# pass version explicitly (mirrors version.sh output)
 ./gradlew -PprojectVersion=1.0.0-SNAPSHOT build
 
-# Gradle — format code
+# format code
 ./gradlew ktfmtFormat
 
-# Gradle — check formatting and lint (without building)
+# check formatting and lint (without building)
 ./gradlew ktfmtCheck detekt
 ```
 
 ### GPG Signing
 
-**Maven:** All artifacts are GPG-signed for Maven Central deployment. Pass `-Dgpg.skip=true` for local development. CI handles signing automatically via secrets.
-
-**Gradle:** Signing uses in-memory PGP keys via vanniktech's `signingInPlaceKey` / `signingInPlaceKeyPassword` Gradle properties, supplied as environment variables in CI. No GPG keyring import needed.
+Signing uses in-memory PGP keys via vanniktech's `signingInPlaceKey` / `signingInPlaceKeyPassword` Gradle properties, supplied as environment variables in CI. No GPG keyring import needed.
 
 ### Versioning
 
@@ -115,8 +101,7 @@ Version is derived from git tags via `version.sh`:
 - If the tag matches `X.Y.Z` exactly, that version is used as-is
 - Otherwise, the git describe output gets `-SNAPSHOT` appended
 
-**Maven CI:** `mvn versions:set -DnewVersion=$(./version.sh)` before building.
-**Gradle CI:** `-PprojectVersion=$(./version.sh)` passed on the command line.
+`-PprojectVersion=$(./version.sh)` is passed on the command line in CI.
 
 ### Code Style and Linting
 
@@ -126,12 +111,7 @@ Version is derived from git tags via `version.sh`:
 
 ### CI/CD
 
-Two GitHub Actions workflows trigger on push to `master`, pull requests to `master`, and GitHub releases:
-
-- **`maven-deploy.yml`** — runs `mvn clean deploy`; signs with GPG via `maven-gpg-plugin`
-- **`gradle-deploy.yml`** — runs `./gradlew ktfmtCheck detekt build` then `./gradlew publish -x test`; signs in-memory via vanniktech
-
-Both workflows attempt SNAPSHOT publishing on every run. SNAPSHOT publishing requires the namespace to have snapshots enabled at central.sonatype.com.
+`gradle-deploy.yml` triggers on push to `master`, pull requests to `master`, and GitHub releases. It runs `./gradlew ktfmtCheck detekt build` then `./gradlew publish -x test`, signing in-memory via vanniktech. SNAPSHOT publishing requires the namespace to have snapshots enabled at central.sonatype.com.
 
 ## Architecture
 
@@ -250,16 +230,13 @@ Integration tests live in `esque-core/src/test/kotlin/` and are named `*IT`. The
 - **Testcontainers** (`testcontainers-elasticsearch`) to spin up a real ES instance via Docker
 - **Logback** as the SLF4J implementation (test scope only)
 
-**Maven:** Tests run via `maven-failsafe-plugin` during the `integration-test` phase (`mvn verify`).
-**Gradle:** Tests run via the standard `test` task (`./gradlew test`).
-
-Docker must be available for integration tests to run.
+Tests run via the standard `test` task (`./gradlew test`). Docker must be available for integration tests to run.
 
 ## Module Notes
 
 - **esque-core**: The published library artifact. Contains all core logic.
 - **esque-examples**: Aggregator with example applications. Not published to Maven Central.
-- **esque-example-core-aws-auth**: Placeholder only (POM exists but no implementation).
+- **esque-example-core-aws-auth**: Placeholder only (no implementation).
 
 ## Known TODOs in Code
 

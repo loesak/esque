@@ -1,4 +1,12 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(git -C *)",
+      "Bash(./gradlew :esque-core:test)",
+      "Bash(./gradlew :esque-core:compileTestKotlin)",
+      "Bash(./gradlew build)"
+    ]
+  },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
