@@ -48,12 +48,24 @@ It is Flyway-esque but for Elasticsearch.
 It basically executes queries and remembers which queries have been run on a cluster for a given migration key. You can organize its usage to your needs.
 
 # Install
-Add the following to your maven dependencies. Make sure to check the releases or Maven Central for the latest version.
+Available on Maven Central. Make sure to check the releases for the latest version.
+
+**Gradle (Kotlin DSL):**
+```kotlin
+implementation("org.loesak.esque:esque-core:0.2.1")
+```
+
+**Gradle (Groovy DSL):**
+```groovy
+implementation 'org.loesak.esque:esque-core:0.2.1'
+```
+
+**Maven:**
 ```xml
 <dependency>
   <groupId>org.loesak.esque</groupId>
   <artifactId>esque-core</artifactId>
-  <version>0.1.4</version>
+  <version>0.2.1</version>
 </dependency>
 ```
 
