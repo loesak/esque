@@ -2,7 +2,7 @@
 
 ## Design Docs and Implementation Plans
 
-Specs and implementation plans live in `.claude/superpowers/`. Specs are named `YYYY-MM-DD-<topic>-design.md`; plans are named `YYYY-MM-DD-<topic>-plan.md`.
+Specs live in `.claude/superpowers/specs/` named `YYYY-MM-DD-<topic>-design.md`. Implementation plans live in `.claude/superpowers/plans/` named `YYYY-MM-DD-<topic>.md`.
 
 ## Project Overview
 
