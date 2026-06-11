@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+## Design Docs and Implementation Plans
+
+Specs and implementation plans live in `.claude/superpowers/`. Specs are named `YYYY-MM-DD-<topic>-design.md`; plans are named `YYYY-MM-DD-<topic>-plan.md`.
+
 ## Project Overview
 
 **Esque** (**E**lasticsearch **S**tateful **Qu**ery **E**xecutor) is a migration management library for Elasticsearch, similar to Flyway but for ES clusters. It executes pre-defined queries in order, tracks which have been applied, validates integrity, and supports distributed locking for safe concurrent execution.
