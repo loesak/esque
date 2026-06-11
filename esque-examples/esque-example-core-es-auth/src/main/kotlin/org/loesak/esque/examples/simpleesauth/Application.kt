@@ -6,6 +6,7 @@ import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.elasticsearch.client.RestClient
 import org.loesak.esque.core.Esque
+import org.loesak.esque.core.EsqueConfiguration
 
 fun main() {
   val migrationKey = "esque-example-core-simple"
@@ -24,5 +25,9 @@ fun main() {
           .setHttpClientConfigCallback { it.setDefaultCredentialsProvider(credentialsProvider) }
           .build()
 
-  Esque(client, migrationKey, migrationUser).use { it.execute() }
+  Esque(
+          client,
+          EsqueConfiguration(migrationKey = migrationKey, migrationUser = migrationUser),
+      )
+      .use { it.execute() }
 }

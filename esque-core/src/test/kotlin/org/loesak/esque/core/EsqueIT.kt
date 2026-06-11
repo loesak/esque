@@ -8,10 +8,12 @@ import org.loesak.esque.core.elasticsearch.RestClientOperations
 
 class EsqueIT : AbstractElasticsearchIT() {
 
+  private val templateProperties = mapOf("templatedIndexName" to "test-index-v4")
+
   @Test
   fun execute_createsEsqueIndex() {
     createRestClient().use { client ->
-      Esque(client, "create-index-test", null, mapOf("templatedIndexName" to "test-index-v4"))
+      Esque(client, EsqueConfiguration(migrationKey = "create-index-test"), templateProperties)
           .execute()
       val response = client.performRequest(Request("HEAD", "/.esque"))
       assertThat(response.statusLine.statusCode).isEqualTo(200)
@@ -21,7 +23,7 @@ class EsqueIT : AbstractElasticsearchIT() {
   @Test
   fun execute_runsAllMigrations() {
     createRestClient().use { client ->
-      Esque(client, "run-all-test", null, mapOf("templatedIndexName" to "test-index-v4")).execute()
+      Esque(client, EsqueConfiguration(migrationKey = "run-all-test"), templateProperties).execute()
       assertIndexExists(client, "/test-index-v1")
       assertIndexExists(client, "/test-index-v2")
       assertIndexExists(client, "/test-index-v3")
@@ -33,7 +35,7 @@ class EsqueIT : AbstractElasticsearchIT() {
   fun execute_recordsMigrationHistory() {
     val migrationKey = "history-test"
     createRestClient().use { client ->
-      Esque(client, migrationKey, null, mapOf("templatedIndexName" to "test-index-v4")).execute()
+      Esque(client, EsqueConfiguration(migrationKey = migrationKey), templateProperties).execute()
 
       val records = RestClientOperations(client, migrationKey).getMigrationRecords()
       assertThat(records).hasSize(4)
@@ -66,11 +68,11 @@ class EsqueIT : AbstractElasticsearchIT() {
   fun execute_isIdempotent() {
     val migrationKey = "idempotent-test"
     createRestClient().use { client ->
-      Esque(client, migrationKey, null, mapOf("templatedIndexName" to "test-index-v4")).execute()
+      Esque(client, EsqueConfiguration(migrationKey = migrationKey), templateProperties).execute()
       val firstRun = RestClientOperations(client, migrationKey).getMigrationRecords()
       assertThat(firstRun).hasSize(4)
 
-      Esque(client, migrationKey, null, mapOf("templatedIndexName" to "test-index-v4")).execute()
+      Esque(client, EsqueConfiguration(migrationKey = migrationKey), templateProperties).execute()
       val secondRun = RestClientOperations(client, migrationKey).getMigrationRecords()
       assertThat(secondRun).hasSize(4)
 
@@ -88,7 +90,7 @@ class EsqueIT : AbstractElasticsearchIT() {
       val key1 = "independent-key-1"
       val key2 = "independent-key-2"
 
-      Esque(client, key1, null, mapOf("templatedIndexName" to "test-index-v4")).execute()
+      Esque(client, EsqueConfiguration(migrationKey = key1), templateProperties).execute()
 
       val records1 = RestClientOperations(client, key1).getMigrationRecords()
       assertThat(records1).hasSize(4)
@@ -104,7 +106,12 @@ class EsqueIT : AbstractElasticsearchIT() {
     val migrationKey = "user-test"
     val user = "integration-test-user"
     createRestClient().use { client ->
-      Esque(client, migrationKey, user, mapOf("templatedIndexName" to "test-index-v4")).execute()
+      Esque(
+              client,
+              EsqueConfiguration(migrationKey = migrationKey, migrationUser = user),
+              templateProperties,
+          )
+          .execute()
       val records = RestClientOperations(client, migrationKey).getMigrationRecords()
       for (record in records) {
         assertThat(record.installedBy).isEqualTo(user)
@@ -116,7 +123,7 @@ class EsqueIT : AbstractElasticsearchIT() {
   fun execute_recordsNullUserWhenNotProvided() {
     val migrationKey = "no-user-test"
     createRestClient().use { client ->
-      Esque(client, migrationKey, null, mapOf("templatedIndexName" to "test-index-v4")).execute()
+      Esque(client, EsqueConfiguration(migrationKey = migrationKey), templateProperties).execute()
       val records = RestClientOperations(client, migrationKey).getMigrationRecords()
       for (record in records) {
         assertThat(record.installedBy).isNull()
@@ -129,8 +136,7 @@ class EsqueIT : AbstractElasticsearchIT() {
     createRestClient().use { client ->
       Esque(
               client,
-              "extra-properties-test",
-              null,
+              EsqueConfiguration(migrationKey = "extra-properties-test"),
               mapOf("unused" to "value", "templatedIndexName" to "test-index-v4"),
           )
           .execute()
@@ -143,9 +149,8 @@ class EsqueIT : AbstractElasticsearchIT() {
     createRestClient().use { client ->
       Esque(
               client,
-              "templating-substitution-test",
-              null,
-              mapOf("templatedIndexName" to "test-index-v4"),
+              EsqueConfiguration(migrationKey = "templating-substitution-test"),
+              templateProperties,
           )
           .execute()
       assertIndexExists(client, "/test-index-v4")
@@ -155,11 +160,12 @@ class EsqueIT : AbstractElasticsearchIT() {
   @Test
   fun execute_withMissingTemplateVariable_throwsBeforeAnyMigrationRuns() {
     createRestClient().use { client ->
-      assertThatThrownBy { Esque(client, "missing-var-test").execute() }
+      assertThatThrownBy {
+            Esque(client, EsqueConfiguration(migrationKey = "missing-var-test")).execute()
+          }
           .rootCause()
           .hasMessageContaining("templatedIndexName")
 
-      // No .esque migration records should exist for this key
       val records = RestClientOperations(client, "missing-var-test").getMigrationRecords()
       assertThat(records).isEmpty()
     }
