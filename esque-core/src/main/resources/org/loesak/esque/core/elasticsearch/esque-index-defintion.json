@@ -2,6 +2,7 @@
   "settings" : {
     "index" : {
       "number_of_shards" : "1",
+      "auto_expand_replicas" : "0-all",
       "refresh_interval" : "1s"
     }
   },
