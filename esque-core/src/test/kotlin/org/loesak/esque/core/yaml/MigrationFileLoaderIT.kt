@@ -1,5 +1,6 @@
 package org.loesak.esque.core.yaml
 
+import java.nio.file.Paths
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -7,7 +8,7 @@ import org.junit.jupiter.api.Test
 class MigrationFileLoaderIT {
 
   private val resolver = MigrationTemplateResolver(mapOf("templatedIndexName" to "test-index-v4"))
-  private val loader = MigrationFileLoader(resolver)
+  private val loader = MigrationFileLoader("classpath:es.migration", resolver)
 
   @Test
   fun load_discoversAllMigrationFiles() {
@@ -87,9 +88,30 @@ class MigrationFileLoaderIT {
 
   @Test
   fun load_withMissingTemplateVariable_throwsListingAllMissingNames() {
-    val loaderWithEmptyProps = MigrationFileLoader(MigrationTemplateResolver(emptyMap()))
+    val loaderWithEmptyProps =
+        MigrationFileLoader("classpath:es.migration", MigrationTemplateResolver(emptyMap()))
     assertThatThrownBy { loaderWithEmptyProps.load() }
         .isInstanceOf(IllegalStateException::class.java)
         .hasMessageContaining("templatedIndexName")
+  }
+
+  @Test
+  fun load_withExplicitClasspathScheme_loadsFiles() {
+    val files = MigrationFileLoader("classpath:es.migration", resolver).load()
+    assertThat(files).hasSize(4)
+  }
+
+  @Test
+  fun load_withFileScheme_loadsFiles() {
+    val dirPath = Paths.get(javaClass.classLoader.getResource("es.migration/")!!.toURI()).toString()
+    val files = MigrationFileLoader("file:$dirPath", resolver).load()
+    assertThat(files).hasSize(4)
+  }
+
+  @Test
+  fun load_withUnknownScheme_failsFast() {
+    assertThatThrownBy { MigrationFileLoader("unknown:es.migration", resolver).load() }
+        .isInstanceOf(IllegalStateException::class.java)
+        .hasMessageContaining("Unsupported")
   }
 }

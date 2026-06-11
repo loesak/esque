@@ -14,20 +14,15 @@ import tools.jackson.module.kotlin.KotlinModule
 private val log = KotlinLogging.logger {}
 
 internal class MigrationFileLoader(
+    private val migrationDirectory: String = "classpath:es.migration",
     private val templateResolver: MigrationTemplateResolver = MigrationTemplateResolver(emptyMap()),
 ) {
 
   fun load(): List<MigrationFile> {
-    log.info { "Loading migration files from [$MIGRATION_DEFINITION_DIRECTORY]" }
+    log.info { "Loading migration files from [$migrationDirectory]" }
 
     val rawFiles =
-        Files.list(
-                Paths.get(
-                    checkNotNull(
-                            javaClass.classLoader.getResource("$MIGRATION_DEFINITION_DIRECTORY/")) {
-                              "Migration directory not found on classpath"
-                            }
-                        .toURI()))
+        Files.list(resolvePath(migrationDirectory))
             .filter(Files::isRegularFile)
             .filter { FILE_NAME_PATTERN.matches(it.toFile().name) }
             .map { readRaw(it) }
@@ -47,8 +42,23 @@ internal class MigrationFileLoader(
     }
   }
 
+  private fun resolvePath(directory: String): Path =
+      when {
+        directory.startsWith("classpath:") -> {
+          val path = directory.removePrefix("classpath:")
+          Paths.get(
+              checkNotNull(javaClass.classLoader.getResource("$path/")) {
+                    "Migration directory not found on classpath: $path"
+                  }
+                  .toURI())
+        }
+        directory.startsWith("file:") -> Paths.get(directory.removePrefix("file:"))
+        else ->
+            error(
+                "Unsupported migration directory scheme in '$directory'. Supported schemes: 'classpath:', 'file:'")
+      }
+
   companion object {
-    private const val MIGRATION_DEFINITION_DIRECTORY = "es.migration"
     private const val MIGRATION_DEFINITION_FILE_NAME_REGEX = "^V((\\d+\\.?)+)__(\\w+)\\.yml$"
     private val FILE_NAME_PATTERN = Regex(MIGRATION_DEFINITION_FILE_NAME_REGEX)
 
