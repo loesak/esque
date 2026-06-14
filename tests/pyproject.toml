@@ -11,9 +11,15 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pyright>=1.1.0",
     "ruff>=0.11.0",
     "ty>=0.0.0a6",
 ]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.14"
+reportMissingTypeStubs = false
 
 [tool.ruff]
 target-version = "py314"

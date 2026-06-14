@@ -23,7 +23,7 @@ class Implementation:
     name: str
     invocation: str
     task: str | None = None
-    command: list[str] = field(default_factory=list)
+    command: list[str] = field(default_factory=lambda: [])
 
 
 def all_implementations() -> list[Implementation]:
