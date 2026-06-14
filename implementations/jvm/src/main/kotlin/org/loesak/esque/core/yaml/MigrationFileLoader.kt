@@ -1,5 +1,6 @@
 package org.loesak.esque.core.yaml
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -8,6 +9,7 @@ import java.nio.file.Paths
 import java.security.MessageDigest
 import org.loesak.esque.core.yaml.model.MigrationFile
 import tools.jackson.databind.SerializationFeature
+import tools.jackson.databind.json.JsonMapper
 import tools.jackson.dataformat.yaml.YAMLMapper
 import tools.jackson.module.kotlin.KotlinModule
 
@@ -63,10 +65,11 @@ internal class MigrationFileLoader(
     private val FILE_NAME_PATTERN = Regex(MIGRATION_DEFINITION_FILE_NAME_REGEX)
 
     private val YAML_MAPPER = YAMLMapper.builder().addModule(KotlinModule.Builder().build()).build()
-    private val YAML_MAPPER_SORTED =
-        YAMLMapper.builder()
+    private val JSON_MAPPER_CANONICAL =
+        JsonMapper.builder()
             .addModule(KotlinModule.Builder().build())
             .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
+            .changeDefaultPropertyInclusion { it.withValueInclusion(JsonInclude.Include.NON_NULL) }
             .build()
 
     private fun readRaw(path: Path): MigrationFile {
@@ -98,7 +101,7 @@ internal class MigrationFileLoader(
 
     internal fun calculateChecksum(contents: MigrationFile.MigrationFileContents): Int {
       val digest = MessageDigest.getInstance("MD5")
-      digest.update(YAML_MAPPER_SORTED.writeValueAsBytes(contents))
+      digest.update(JSON_MAPPER_CANONICAL.writeValueAsBytes(contents))
       return ByteBuffer.wrap(digest.digest()).int
     }
   }
