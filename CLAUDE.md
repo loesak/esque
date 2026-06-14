@@ -9,50 +9,66 @@ Specs live in `.claude/superpowers/specs/` named `YYYY-MM-DD-<topic>-design.md`.
 **Esque** (**E**lasticsearch **S**tateful **Qu**ery **E**xecutor) is a migration management library for Elasticsearch, similar to Flyway but for ES clusters. It executes pre-defined queries in order, tracks which have been applied, validates integrity, and supports distributed locking for safe concurrent execution.
 
 - **License:** Apache 2.0
-- **Language:** Kotlin 2.4.0 (JVM 21)
-- **Build:** Gradle 9.5.1
-- **Target:** Elasticsearch 9+ (client version 9.4.x low-level REST client)
-- **Published to:** Maven Central via Central Portal
+- **Implementations:** JVM (Kotlin 2.4.0, Java 21) · Python 3.14
+- **Target:** Elasticsearch 9+ (ES 9.4.x REST API)
+- **JVM published to:** Maven Central as `org.loesak.esque:esque-core`
+- **Python published to:** PyPI as `esque-python`
 
 ## Repository Structure
 
 ```
 esque/
-├── build.gradle.kts                 # Root Gradle build
-├── settings.gradle.kts              # Gradle settings (module declarations)
-├── gradle/
-│   ├── libs.versions.toml           # Gradle version catalog
-│   └── wrapper/                     # Gradle wrapper (9.5.1)
-├── gradlew / gradlew.bat            # Gradle wrapper scripts
-├── version.sh                       # Git-tag-based version calculation
+├── version.sh                       # Git-tag-based version calculation (used by JVM CI)
 ├── setup-hooks.sh                   # One-time dev setup: activates git pre-commit hook
 ├── .githooks/
-│   └── pre-commit                   # Runs ktfmtCheck + detekt + test before each commit
-├── config/detekt/
-│   ├── detekt.yml                   # Detekt rule configuration
-│   └── baseline.xml                 # Baseline of pre-existing violations
+│   └── pre-commit                   # [1] JVM checks [2] Python checks [3] compat tests
 ├── .github/workflows/
-│   └── gradle-deploy.yml            # CI/CD: Gradle build + deploy to Maven Central
+│   ├── ci.yml                       # build-jvm + build-python → compatibility-tests
+│   └── release.yml                  # publish-jvm (Maven Central) + publish-python (PyPI)
 ├── .devcontainer/                   # Dev container (Ubuntu, Zulu JDK 21)
-├── esque-core/                      # Core library (the published artifact)
-│   ├── build.gradle.kts
-│   └── src/main/kotlin/org/loesak/esque/core/
-│       ├── Esque.kt                 # Main entry point / orchestrator
-│       ├── concurrent/
-│       │   └── ElasticsearchDocumentLock.kt  # Distributed lock via ES docs
-│       ├── elasticsearch/
-│       │   ├── RestClientOperations.kt       # ES REST client abstraction
-│       │   └── documents/
-│       │       ├── MigrationRecord.kt        # Applied migration record model
-│       │       └── MigrationLock.kt          # Lock document model
-│       └── yaml/
-│           ├── MigrationFileLoader.kt        # YAML file discovery and parsing
-│           └── model/
-│               └── MigrationFile.kt          # Migration file domain model
-└── esque-examples/                  # Example applications (not published)
-    ├── esque-example-core-simple/   # Basic usage, no auth
-    ├── esque-example-core-es-auth/  # Elasticsearch basic auth
-    └── esque-example-core-aws-auth/ # AWS auth (placeholder, not implemented)
+├── implementations/
+│   ├── jvm/                         # JVM/Kotlin implementation
+│   │   ├── build.gradle.kts         # Single-project Gradle build (merged root + core)
+│   │   ├── settings.gradle.kts      # rootProject.name = "esque-core"
+│   │   ├── gradle/
+│   │   │   ├── libs.versions.toml   # Gradle version catalog
+│   │   │   └── wrapper/             # Gradle wrapper (9.5.1)
+│   │   ├── gradlew / gradlew.bat    # Gradle wrapper scripts
+│   │   ├── gradle.properties        # Gradle daemon/cache/parallel settings
+│   │   ├── detekt.yml               # Detekt rule configuration
+│   │   └── src/main/kotlin/org/loesak/esque/core/
+│   │       ├── Esque.kt             # Main orchestrator
+│   │       ├── EsqueConfiguration.kt
+│   │       ├── cli/Main.kt          # Clikt CLI entrypoint
+│   │       ├── concurrent/
+│   │       │   └── ElasticsearchDocumentLock.kt
+│   │       ├── elasticsearch/
+│   │       │   ├── RestClientOperations.kt
+│   │       │   └── documents/
+│   │       │       ├── MigrationRecord.kt
+│   │       │       └── MigrationLock.kt
+│   │       └── yaml/
+│   │           ├── MigrationFileLoader.kt
+│   │           ├── MigrationTemplateResolver.kt
+│   │           └── model/MigrationFile.kt
+│   └── python/                      # Python implementation
+│       ├── pyproject.toml           # uv project: click, httpx, pyyaml; hatchling build
+│       └── esque/
+│           ├── __init__.py
+│           └── __main__.py          # Full implementation + Click CLI in one file
+└── tests/                           # Black-box compatibility test harness
+    ├── pyproject.toml               # uv project: pytest, testcontainers, httpx, pyyaml
+    ├── implementations.yml          # Registered implementations with invocation config
+    ├── conftest.py                  # Session-scoped ES testcontainer + per-test cleanup
+    ├── helpers.py                   # run(), get_records(), assert_index_exists()
+    ├── test_compatibility.py        # 17 scenarios parametrized over all implementations
+    └── fixtures/                    # Migration YAML files per test scenario
+        ├── standard/                # 3 migrations (V1.0.0, V1.1.0, V2.0.0)
+        ├── templated/               # standard + V3.0.0 with #{indexName}
+        ├── single/                  # V1.0.0 only
+        ├── ordering/                # V1.9.0 and V1.10.0 (numeric ordering edge case)
+        ├── integrity-modified/      # V1.0.0 has different content → checksum mismatch
+        └── integrity-missing/       # Only V1.0.0 and V1.1.0 (V2.0.0 absent)
 ```
 
 ## Build and Development
@@ -60,7 +76,8 @@ esque/
 ### Prerequisites
 
 - Java 21 (Zulu distribution recommended)
-- Gradle (wrapper included — no install needed)
+- uv (Python package manager — `curl -LsSf https://astral.sh/uv/install.sh | sh`)
+- Docker (for integration tests and compatibility tests via testcontainers)
 
 ### First-time setup
 
@@ -70,11 +87,13 @@ After cloning, activate the pre-commit hook:
 ./setup-hooks.sh
 ```
 
-This sets `core.hooksPath = .githooks` in your local git config. Git won't do this automatically (by design — executing scripts on clone is a security risk).
+This sets `core.hooksPath = .githooks` in your local git config.
 
-### Common Commands
+### JVM Commands (run from `implementations/jvm/`)
 
 ```bash
+cd implementations/jvm
+
 # compile
 ./gradlew compileKotlin
 
@@ -89,159 +108,219 @@ This sets `core.hooksPath = .githooks` in your local git config. Git won't do th
 
 # check formatting and lint (without building)
 ./gradlew ktfmtCheck detekt
+
+# run the CLI
+./gradlew run --args="--help"
 ```
 
-### GPG Signing
+### Python Commands (run from `implementations/python/`)
 
-Signing uses in-memory PGP keys via vanniktech's `signingInPlaceKey` / `signingInPlaceKeyPassword` Gradle properties, supplied as environment variables in CI. No GPG keyring import needed.
+```bash
+cd implementations/python
 
-### Versioning
+# install dependencies
+uv sync
+
+# format code
+uv run ruff format esque/
+
+# check formatting and lint
+uv run ruff check esque/ && uv run ruff format --check esque/
+
+# typecheck
+uv run pyright esque/
+
+# run the CLI
+uv run esque --help
+```
+
+### Compatibility Tests (run from `tests/`)
+
+```bash
+cd tests
+
+# run all tests against all registered implementations
+uv run pytest . -v
+
+# run against a specific implementation only
+uv run pytest . -v -k "jvm"
+uv run pytest . -v -k "python"
+```
+
+### GPG Signing (JVM)
+
+Signing uses in-memory PGP keys via vanniktech's `signingInMemoryKey` / `signingInMemoryKeyPassword` Gradle properties, supplied as environment variables in CI. No GPG keyring import needed.
+
+### Versioning (JVM)
 
 Version is derived from git tags via `version.sh`:
 - If the tag matches `X.Y.Z` exactly, that version is used as-is
 - Otherwise, the git describe output gets `-SNAPSHOT` appended
 
-`-PprojectVersion=$(./version.sh)` is passed on the command line in CI.
+`-PprojectVersion=$(../../version.sh)` is passed on the command line in CI from `implementations/jvm/`.
 
-### Code Style and Linting
+### JVM Code Style and Linting
 
 - **Formatting**: [ktfmt](https://github.com/facebook/ktfmt) via `com.ncorti.ktfmt.gradle`. Run `./gradlew ktfmtFormat` to auto-format. CI fails on unformatted code.
-- **Linting**: [detekt](https://detekt.dev/) via `io.gitlab.arturbosch.detekt`. Config in `config/detekt/detekt.yml`. Existing violations are baselined in `config/detekt/baseline.xml` — new violations fail the build. Run `./gradlew detektBaseline` to regenerate the baseline after intentionally fixing or accepting violations.
+- **Linting**: [detekt](https://detekt.dev/) via `io.gitlab.arturbosch.detekt`. Config in `implementations/jvm/detekt.yml`. Run `./gradlew detektBaseline` to regenerate the baseline after intentionally accepting violations.
 - Disabled rules: `MaxLineLength` (ktfmt owns this), `TooGenericExceptionCaught` (too strict at boundary layers), `ForbiddenComment` (informational TODOs are tracked as known issues).
+
+### Python Code Style and Typing
+
+- **Formatting/Linting**: [ruff](https://docs.astral.sh/ruff/) — Black-compatible, line-length 120. Run `uv run ruff format esque/` to auto-format.
+- **Type checking**: [pyright](https://github.com/microsoft/pyright) in `strict` mode + [ty](https://github.com/astral-sh/ty) with all warn-level rules escalated to errors. All code must be fully annotated.
 
 ### CI/CD
 
-`gradle-deploy.yml` triggers on push to `master`, pull requests to `master`, and GitHub releases. It runs `./gradlew ktfmtCheck detekt build` then `./gradlew publish -x test`, signing in-memory via vanniktech. SNAPSHOT publishing requires the namespace to have snapshots enabled at central.sonatype.com.
+A single **`ci.yml`** handles everything — checks, publishing, and compatibility tests:
+
+- **Triggers**: push to `master` · PRs to `master` · published GitHub releases
+- **`jvm`**: ktfmtCheck + detekt + build + publish on every build. vanniktech plugin routes automatically — `*-SNAPSHOT` versions go to OSSRH snapshots, release versions go to Maven Central staging.
+- **`python`**: ruff + pyright + build + publish on every build. Version is computed by `version_python.sh` (PEP 440: `X.Y.Z` on exact tag, `X.Y.Z.devN` otherwise) and patched into `pyproject.toml` before building. Non-release builds publish to TestPyPI (`TEST_PYPI_TOKEN`); release builds publish to PyPI (`PYPI_TOKEN`).
+- **`compatibility-tests`**: needs `jvm` + `python`; runs 34 pytest scenarios via testcontainers.
 
 ## Architecture
 
 ### Execution Flow
 
-`Esque.execute()` performs:
-1. **Initialize** - Create the `.esque` index in ES if it doesn't exist
-2. **Load** - Discover and parse YAML migration files from classpath (`es.migration/` directory)
-3. **Load history** - Fetch existing migration records from ES for the given migration key
-4. **Verify integrity** - Validate files match history (checksums, ordering, versions)
-5. **Execute migrations** - For each unapplied file:
-   - Acquire distributed lock (5 min timeout)
+Both implementations perform the same sequence:
+
+1. **Initialize** — Create the `.esque` index in ES if it doesn't exist
+2. **Load** — Discover and parse YAML migration files from the migrations directory
+3. **Validate templates** — Fail fast if any `#{varName}` references a missing property
+4. **Resolve templates** — Substitute `#{varName}` → `properties[varName]` in all request fields (path, contentType, params values, body; NOT method)
+5. **Calculate checksums** — JSON canonical (sorted keys, nulls omitted, compact UTF-8 → MD5 → first 4 bytes big-endian signed int)
+6. **Load history** — Fetch existing migration records from ES for the given migration key
+7. **Verify integrity** — Records ≤ files; no gaps; each record's checksum/version/description/order matches its companion file
+8. **Execute migrations** — For each unapplied file:
+   - Acquire distributed lock (`op_type=create`, 100ms poll, configurable timeout)
    - Skip if already applied (idempotent in distributed environments)
    - Execute each HTTP request defined in the file sequentially
    - Record execution metadata (user, timestamp, duration, checksum)
    - Release lock
 
-### Key Classes
+### Key Classes (JVM)
 
 | Class | Purpose |
 |-------|---------|
-| `Esque` | Main orchestrator - coordinates the full migration lifecycle |
-| `RestClientOperations` | ES REST client abstraction for all index/document operations |
-| `MigrationFileLoader` | Discovers and parses YAML files from classpath |
-| `MigrationFile` | Domain model (data class) for migration files with version-based ordering |
-| `ElasticsearchDocumentLock` | Distributed lock using ES `op_type=create` for atomicity |
-| `MigrationRecord` | Domain model (data class) for applied migration history records |
-| `MigrationLock` | Domain model (data class) for lock documents |
+| `Esque` | Main orchestrator |
+| `EsqueConfiguration` | Configuration data class |
+| `RestClientOperations` | ES REST client abstraction |
+| `MigrationFileLoader` | File discovery, parsing, template resolution, checksum |
+| `MigrationTemplateResolver` | `#{varName}` substitution and validation |
+| `MigrationFile` | Domain model with version-based `Comparable` ordering |
+| `ElasticsearchDocumentLock` | Distributed lock via ES `op_type=create` |
+| `MigrationRecord` | Applied migration history record |
+| `MigrationLock` | Lock document model |
 
-### Distributed Locking
+### Checksum Algorithm
 
-`ElasticsearchDocumentLock` implements `java.util.concurrent.locks.Lock` using a hybrid approach:
-- Local `ReentrantLock` for in-process thread safety
-- Remote ES document creation (`op_type=create`) for cross-process/cross-node safety
-- Inspired by Spring Integration lock implementations (JDBC, Zookeeper, Redis)
-- Configurable polling interval (default 100ms)
+Both implementations must produce identical checksums for the same resolved migration content:
+
+1. Serialize the resolved request list as JSON: `{"requests": [{...}, ...]}` with keys sorted alphabetically and null fields omitted
+2. Encode as UTF-8
+3. Compute MD5 digest
+4. Take the first 4 bytes interpreted as a big-endian signed 32-bit integer
+
+This is the canonical algorithm since Phase 3. The JVM uses `JSON_MAPPER_CANONICAL` (Jackson with `ORDER_MAP_ENTRIES_BY_KEYS` + `NON_NULL`). Python uses `json.dumps(sort_keys=True, separators=(',', ':'))` after recursively removing None values.
+
+### ES Document Structure
+
+Migration records are stored in the hidden `.esque` index with a `migration` wrapper object (due to Jackson `@JsonTypeInfo(As.WRAPPER_OBJECT)` in the JVM):
+
+```json
+{
+  "_source": {
+    "migration": {
+      "migrationKey": "...",
+      "order": 0,
+      "filename": "V1.0.0__CreateFirstIndex.yml",
+      "version": "1.0.0",
+      "description": "CreateFirstIndex",
+      "checksum": -123456789,
+      "installedBy": null,
+      "installedOn": "2026-06-13T12:00:00Z",
+      "executionTime": 42
+    }
+  }
+}
+```
+
+Lock documents use the same wrapper pattern: `{"lock": {"date": "..."}}` with doc ID `lock:<migrationKey>`.
+
+Query for records: `POST /.esque/_search` with body `{"query":{"bool":{"filter":[{"term":{"migration.migrationKey":"<key>"}}]}}}`.
 
 ### Migration File Format
-
-Files must be placed in `src/main/resources/es.migration/` and follow the naming convention:
 
 ```
 V{VERSION}__{DESCRIPTION}.yml
 ```
 
-- **VERSION**: Dot-separated numeric segments (e.g., `1.0.0`, `2.1`)
-- **DESCRIPTION**: Alphanumeric with underscores (word characters only)
+- **VERSION**: Dot-separated numeric segments (e.g., `1.0.0`, `2.1`). Sorted numerically per segment — `1.9.0` < `1.10.0`.
+- **DESCRIPTION**: Alphanumeric with underscores (`\w+`)
 - **Pattern**: `^V((\d+\.?)+)__(\w+)\.yml$`
 
-Example: `V1.0.0__InitialIndexAndAlias.yml`
+### Distributed Locking
 
-File contents use YAML format:
+Uses ES `op_type=create` for cross-process atomicity. The JVM also wraps this with a local `ReentrantLock` for thread safety. Python polls at 100ms intervals. Both default to a 5-minute timeout.
 
-```yaml
----
-requests:
-  - method: "PUT"
-    path: "/my-index-v1"
-    contentType: application/json; charset=utf-8
-
-  - method: "POST"
-    path: "/_aliases"
-    contentType: application/json; charset=utf-8
-    body: >
-      {
-        "actions": [
-          { "add": { "index": "my-index-v1", "alias": "my-index" } }
-        ]
-      }
-```
-
-Each request supports: `method` (required), `path` (required), `contentType`, `params` (key-value map), `body`.
-
-### State Tracking
-
-Esque uses a hidden ES index `.esque` with two document types:
-- **lock**: Contains a `date` field (used for distributed locking)
-- **migration**: Contains `migrationKey`, `order`, `filename`, `version`, `description`, `checksum`, `installedBy`, `installedOn`, `executionTime`
-
-Integrity is verified by matching file checksums (MD5) against stored records.
-
-## Code Conventions
+## JVM Code Conventions
 
 ### Style
 
-- **Indentation**: 4 spaces
+- **Indentation**: 2 spaces (ktfmt manages this)
 - **Encoding**: UTF-8
 - **Class naming**: PascalCase
-- **Method naming**: camelCase, descriptive (e.g., `checkMigrationIndexExists`)
-- **Constants**: UPPER_SNAKE_CASE (e.g., `MIGRATION_DOCUMENT_INDEX`)
-- **Packages**: lowercase dot-separated under `org.loesak.esque.core`
+- **Method naming**: camelCase
+- **Constants**: UPPER_SNAKE_CASE
+- **Packages**: lowercase under `org.loesak.esque.core`
 
 ### Patterns and Libraries
 
-- **Kotlin data classes**: Used for all immutable domain models (`MigrationRecord`, `MigrationLock`, `MigrationFile` and its nested types). Kotlin null safety enforces non-null constraints.
-- **Jackson**: Full suite for JSON and YAML serialization, versions managed via `jackson-bom`
-  - `@JsonTypeInfo` / `@JsonTypeName` for type-wrapped serialization on document models
-  - `jackson-module-kotlin` for Kotlin data class deserialization
-- **kotlin-logging** (`io.github.oshai.kotlinlogging.KotlinLogging`): top-level `val log = KotlinLogging.logger {}`
-- **Kotlin idioms**: extension functions, `use {}` for resource management, `filter`/`map`/`toList()` for collections
-- **Logging**: SLF4J via kotlin-logging; info for flow, debug for request/response detail, warn/error for failures
+- **Kotlin data classes**: All immutable domain models
+- **Jackson**: JSON and YAML serialization via `jackson-bom`; `@JsonTypeInfo` / `@JsonTypeName` for type-wrapped ES documents; `jackson-module-kotlin` for data class deserialization
+- **kotlin-logging**: `val log = KotlinLogging.logger {}` at top level
+- **Clikt 4.4.0**: CLI parsing (`--es-url`, `--migrations-dir`, `--migration-key`, `--migration-user`, `--lock-timeout-minutes`, `--property` repeatable)
 
-### Design Principles
+## Python Code Conventions
 
-- Domain models are immutable (Kotlin data classes)
-- All ES operations are centralized in `RestClientOperations`
-- Migration ordering is deterministic via `Comparable<MigrationFile>` (version parts, then lexical)
-- Exceptions wrap lower-level errors with context messages
-- No rollback on failure (documented limitation)
+- **All code in `esque/__main__.py`** — single module, invoked as `python -m esque` or via the `esque` entry point script
+- **Strict typing**: all functions annotated; `cast()` used where isinstance-narrowing produces Unknown
+- **httpx**: ES REST calls (not elasticsearch-py, to avoid client version compatibility issues)
+- **PyYAML**: migration file parsing
+- **Click**: CLI with the same option names as the JVM Clikt interface
 
 ## Testing
 
-Integration tests live in `esque-core/src/test/kotlin/` and are named `*IT`. They use:
-- **JUnit 5** (`junit-jupiter`) as the test framework
-- **AssertJ** for assertions
-- **Testcontainers** (`testcontainers-elasticsearch`) to spin up a real ES instance via Docker
-- **Logback** as the SLF4J implementation (test scope only)
+### JVM Integration Tests
 
-Tests run via the standard `test` task (`./gradlew test`). Docker must be available for integration tests to run.
+Live in `implementations/jvm/src/test/kotlin/` and are named `*IT`. Use JUnit 5, AssertJ, and testcontainers-elasticsearch. Run via `./gradlew test` (requires Docker).
 
-## Module Notes
+### Compatibility Test Harness
 
-- **esque-core**: The published library artifact. Contains all core logic.
-- **esque-examples**: Aggregator with example applications. Not published to Maven Central.
-- **esque-example-core-aws-auth**: Placeholder only (no implementation).
+Lives in `tests/` as a standalone uv project. Each test invokes an implementation as a subprocess via its CLI, then queries ES directly via httpx to verify state.
+
+- **Fixture**: one session-scoped ES container (`ElasticSearchContainer`), cleaned between tests with `DELETE /.esque` and `DELETE /test-*`
+- **Parametrized**: every test function is parametrized over `all_implementations()` which reads `tests/implementations.yml`
+- **Adding a new implementation**: add an entry to `implementations.yml` with `invocation: direct` and a `command` list; tests run automatically
+
+### Registered Implementations (`tests/implementations.yml`)
+
+```yaml
+implementations:
+  jvm:
+    invocation: gradle
+    gradle_dir: "implementations/jvm"
+    task: "run"
+  python:
+    invocation: direct
+    command: ["uv", "run", "--project", "implementations/python", "esque"]
+```
 
 ## Known TODOs in Code
 
-- Differentiate lock creation failure vs. lock-already-exists (`RestClientOperations`)
+- Differentiate lock creation failure vs. lock-already-exists (JVM `RestClientOperations`)
 - Configurable lock timeout for long-running queries (`Esque.kt`)
 - Consider writing "FAILED" migration records (`Esque.kt`)
-- Rollback/undo capability (mentioned in README)
-- Elasticsearch security / AWS ES security support (README)
+- Rollback/undo capability
+- Elasticsearch security / AWS auth support

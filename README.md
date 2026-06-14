@@ -1,63 +1,46 @@
 # esque
 Resembles an **E**lasticsearch **S**tateful **Qu**ery **E**xecutor
 
-# What is it
-A means of repeatable execution of pre-defined queries against your Elasticsearch cluster. Esque will remember which queries it ran against the cluster and only execute those that have not in the order they are defined.
+## What is it
+
+A means of repeatable, ordered execution of pre-defined queries against an Elasticsearch cluster. Esque remembers which queries it has run and only executes those that haven't been applied yet, in the order they are defined.
 
 It is Flyway-esque but for Elasticsearch.
 
-# What it does
-* Define queries in migration files using YAML
-* Executes the migration files in order as needed
-* Maintains state of which migration files have been executed
-* Ensures integrity between migration files and applied migrations
-* Locks migration operations across distributed systems to ensure single execution
-* Can supply your own distributed lock if needed (e.g. Hazelcast)
-* Allows for different logical separation of migration sets via a migration key
+## What it does
 
-# What it doesn't
-* Rollback in the face of failure. Back up your systems and test your migrations
+- Define queries in migration files using YAML
+- Execute migration files in version order
+- Track which migrations have been applied
+- Verify integrity between local files and applied history (checksums, ordering)
+- Lock migration operations across distributed systems to ensure single execution
+- Support logical separation of migration sets via a migration key
+- Substitute template variables (`#{varName}`) in migration files at runtime
 
-# Prerequisites
-* Elasticsearch 9+
+## What it doesn't
 
-# Dependencies
-* org.jetbrains.kotlin:kotlin-stdlib
-* org.elasticsearch.client:elasticsearch-rest-client
-* com.fasterxml.jackson.core:jackson-databind
-* com.fasterxml.jackson.module:jackson-module-kotlin
-* com.fasterxml.jackson.datatype:jackson-datatype-jsr310
-* com.fasterxml.jackson.dataformat:jackson-dataformat-yaml
-* org.slf4j:slf4j-api
+- Roll back on failure — back up your data and test migrations before applying them
 
-# Use cases
-* Executing all queries for bootstrapping a brand new Elasticsearch cluster. For example:
-    - cluster settings
-    - saved searches
-    - visualizations
-    - dashboards
-    - creating indexes
-    - creating users
-* Executing queries needed for a particular application. For example:
-    - creating indexes
-    - creating index templates
-    - creating/modifying index aliases
-    - index schema modification
-    - etc.
-    
-It basically executes queries and remembers which queries have been run on a cluster for a given migration key. You can organize its usage to your needs.
+## Prerequisites
 
-# Install
-Available on Maven Central. Make sure to check the releases for the latest version.
+- Elasticsearch 9+
+
+## Implementations
+
+Esque is available as both a **JVM library** (Kotlin/Java) and a **Python package**.
+
+### JVM (Kotlin/Java)
+
+Available on Maven Central. See [releases](https://github.com/loesak/esque/releases) for the latest version.
 
 **Gradle (Kotlin DSL):**
 ```kotlin
-implementation("org.loesak.esque:esque-core:0.2.1")
+implementation("org.loesak.esque:esque-core:<version>")
 ```
 
 **Gradle (Groovy DSL):**
 ```groovy
-implementation 'org.loesak.esque:esque-core:0.2.1'
+implementation 'org.loesak.esque:esque-core:<version>'
 ```
 
 **Maven:**
@@ -65,18 +48,62 @@ implementation 'org.loesak.esque:esque-core:0.2.1'
 <dependency>
   <groupId>org.loesak.esque</groupId>
   <artifactId>esque-core</artifactId>
-  <version>0.2.1</version>
+  <version><version></version>
 </dependency>
 ```
 
-# Cluster Authentication
-You provide the RestClient, so you configure it for whatever authentication mechanism is in place for your cluster.
+You supply the `RestClient`, so you configure it for whatever authentication mechanism your cluster uses.
 
-# Examples
-Example projects exist in the `esque-examples` subdirectory 
+### Python
 
-# Future Features
-* may allow ability to define "undo" queries for each definition to allow for attempts to roll back in the face of partial failure
-* may allow ability to define "always" queries that are executed every run
-* support multiple versions of Elasticsearch
-* migrate to the new Rest5Client and RestClient is now legacy.
+Available on PyPI:
+
+```bash
+pip install esque-python
+```
+
+Both implementations share the same CLI contract, migration file format, checksum algorithm, and ES document structure, so they are interchangeable for any given migration key.
+
+## Migration File Format
+
+Files follow the naming convention `V{VERSION}__{DESCRIPTION}.yml` and are placed in a migrations directory:
+
+```
+V1.0.0__CreateIndex.yml
+V1.1.0__AddAlias.yml
+V2.0.0__UpdateMapping.yml
+```
+
+File contents:
+
+```yaml
+---
+requests:
+  - method: "PUT"
+    path: "/my-index-v1"
+    contentType: application/json; charset=utf-8
+
+  - method: "POST"
+    path: "/_aliases"
+    contentType: application/json; charset=utf-8
+    body: >
+      {
+        "actions": [
+          { "add": { "index": "my-index-v1", "alias": "my-index" } }
+        ]
+      }
+```
+
+Each request supports: `method` (required), `path` (required), `contentType`, `params` (key-value map), `body`. Template variables (`#{varName}`) are substituted at runtime.
+
+## Use Cases
+
+- Bootstrapping a new cluster: settings, index templates, aliases, users
+- Application-scoped migrations: creating indexes, modifying mappings, updating aliases
+- Any scenario where you need ordered, idempotent, tracked ES operations
+
+## Known Limitations
+
+- No rollback on failure
+- No "always run" migrations
+- Esque tracks history per `migrationKey` — different implementations writing to the same key must use the same checksum algorithm (both do; they use JSON canonical MD5)

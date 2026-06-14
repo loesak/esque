@@ -3,3 +3,9 @@ target
 /.idea/
 .gradle/
 build/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
