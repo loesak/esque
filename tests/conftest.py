@@ -13,7 +13,9 @@ def es_url():
         .with_env("xpack.security.enabled", "false")
         .with_env("action.destructive_requires_name", "false")
     ) as es:
-        yield es.get_url()
+        host = es.get_container_host_ip()
+        port = es.get_exposed_port(9200)
+        yield f"http://{host}:{port}"
 
 
 @pytest.fixture(autouse=True)
