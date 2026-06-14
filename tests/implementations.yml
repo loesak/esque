@@ -2,3 +2,6 @@ implementations:
   jvm:
     invocation: gradle
     task: ":esque-core:run"
+  python:
+    invocation: direct
+    command: ["uv", "run", "--project", "implementations/python", "esque"]
