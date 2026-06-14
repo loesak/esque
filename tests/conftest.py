@@ -13,6 +13,9 @@ def es_url() -> Iterator[str]:
         ElasticSearchContainer(ES_IMAGE)
         .with_env("xpack.security.enabled", "false")
         .with_env("action.destructive_requires_name", "false")
+        .with_env("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
+        .with_env("xpack.ml.enabled", "false")
+        .with_env("node.store.allow_mmap", "false")
     ) as es:
         host = es.get_container_host_ip()
         port = es.get_exposed_port(9200)
