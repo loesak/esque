@@ -18,13 +18,14 @@ Specs live in `.claude/superpowers/specs/` named `YYYY-MM-DD-<topic>-design.md`.
 
 ```
 esque/
-├── version.sh                       # Git-tag-based version calculation (used by JVM CI)
 ├── setup-hooks.sh                   # One-time dev setup: activates git pre-commit hook
 ├── .githooks/
 │   └── pre-commit                   # [1] JVM checks [2] Python checks [3] compat tests
-├── .github/workflows/
-│   ├── ci.yml                       # build-jvm + build-python → compatibility-tests
-│   └── release.yml                  # publish-jvm (Maven Central) + publish-python (PyPI)
+├── .github/
+│   ├── version_jvm.sh               # Git-tag-based version for JVM (X.Y.Z or X.Y.Z-...-SNAPSHOT)
+│   ├── version_python.sh            # PEP 440 version for Python (X.Y.Z or X.Y.Z.devN)
+│   └── workflows/
+│       └── ci.yml                   # lint + build + publish + compatibility-tests
 ├── .devcontainer/                   # Dev container (Ubuntu, Zulu JDK 21)
 ├── implementations/
 │   ├── jvm/                         # JVM/Kotlin implementation
@@ -157,7 +158,7 @@ Version is derived from git tags via `version.sh`:
 - If the tag matches `X.Y.Z` exactly, that version is used as-is
 - Otherwise, the git describe output gets `-SNAPSHOT` appended
 
-`-PprojectVersion=$(../../version.sh)` is passed on the command line in CI from `implementations/jvm/`.
+`-PprojectVersion=$(../../.github/version_jvm.sh)` is passed on the command line in CI from `implementations/jvm/`.
 
 ### JVM Code Style and Linting
 
@@ -176,7 +177,7 @@ A single **`ci.yml`** handles everything — checks, publishing, and compatibili
 
 - **Triggers**: push to `master` · PRs to `master` · published GitHub releases
 - **`jvm`**: ktfmtCheck + detekt + build + publish on every build. vanniktech plugin routes automatically — `*-SNAPSHOT` versions go to OSSRH snapshots, release versions go to Maven Central staging.
-- **`python`**: ruff + pyright + build + publish on every build. Version is computed by `version_python.sh` (PEP 440: `X.Y.Z` on exact tag, `X.Y.Z.devN` otherwise) and patched into `pyproject.toml` before building. Non-release builds publish to TestPyPI (`TEST_PYPI_TOKEN`); release builds publish to PyPI (`PYPI_TOKEN`).
+- **`python`**: ruff + pyright + build + publish on every build. Version is computed by `.github/version_python.sh` (PEP 440: `X.Y.Z` on exact tag, `X.Y.Z.devN` otherwise) and patched into `pyproject.toml` before building. Non-release builds publish to TestPyPI (`TEST_PYPI_TOKEN`); release builds publish to PyPI (`PYPI_TOKEN`).
 - **`compatibility-tests`**: needs `jvm` + `python`; runs 34 pytest scenarios via testcontainers.
 
 ## Architecture
