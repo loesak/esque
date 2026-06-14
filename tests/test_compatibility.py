@@ -1,21 +1,21 @@
 import pytest
+
 from helpers import (
-    Implementation,
     INTEGRITY_MISSING_MIGRATIONS,
     INTEGRITY_MODIFIED_MIGRATIONS,
     ORDERING_MIGRATIONS,
     SINGLE_MIGRATION,
     STANDARD_MIGRATIONS,
     TEMPLATED_MIGRATIONS,
+    Implementation,
     all_implementations,
-    assert_index_absent,
     assert_index_exists,
     get_records,
     run,
 )
 
 
-def implementations():
+def implementations() -> pytest.MarkDecorator:
     return pytest.mark.parametrize(
         "impl",
         all_implementations(),
@@ -63,7 +63,7 @@ def test_idempotent_execution(impl: Implementation, es_url: str) -> None:
     second = get_records(es_url, key)
     assert len(second) == 3
 
-    for a, b in zip(first, second):
+    for a, b in zip(first, second, strict=True):
         assert a["checksum"] == b["checksum"], "Checksum changed between runs"
         assert a["installedOn"] == b["installedOn"], "installedOn changed between runs"
 
@@ -231,7 +231,7 @@ def test_missing_template_property_fails_before_any_migration(
         # no properties — #{indexName} is unresolvable
     )
     assert result.returncode != 0, (
-        f"Expected esque to fail with missing template variable, but it succeeded"
+        "Expected esque to fail with missing template variable, but it succeeded"
     )
     assert len(get_records(es_url, key)) == 0, (
         "No migration records should be written when template validation fails"

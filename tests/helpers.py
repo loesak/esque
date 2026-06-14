@@ -3,6 +3,7 @@ from __future__ import annotations
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import httpx
 import yaml
@@ -27,7 +28,7 @@ class Implementation:
 
 def all_implementations() -> list[Implementation]:
     config_path = ROOT_DIR / "tests" / "implementations.yml"
-    config = yaml.safe_load(config_path.read_text())
+    config: dict[str, Any] = yaml.safe_load(config_path.read_text())
     return [
         Implementation(name=name, **cfg)
         for name, cfg in config["implementations"].items()
@@ -41,7 +42,7 @@ def run(
     migrations_dir: Path,
     user: str | None = None,
     properties: dict[str, str] | None = None,
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     esque_args = [
         f"--es-url={es_url}",
         f"--migrations-dir={migrations_dir}",
@@ -54,6 +55,8 @@ def run(
             esque_args.append(f"--property={k}={v}")
 
     if impl.invocation == "gradle":
+        if impl.task is None:
+            raise ValueError("Gradle implementation missing 'task' configuration")
         args_str = " ".join(esque_args)
         cmd = ["./gradlew", impl.task, f"--args={args_str}"]
     elif impl.invocation == "direct":
@@ -70,15 +73,13 @@ def run(
     )
 
 
-def get_records(es_url: str, key: str) -> list[dict]:
+def get_records(es_url: str, key: str) -> list[dict[str, Any]]:
     try:
         response = httpx.post(
             f"{es_url}/.esque/_search",
             json={
                 "query": {
-                    "bool": {
-                        "filter": [{"term": {"migration.migrationKey": key}}]
-                    }
+                    "bool": {"filter": [{"term": {"migration.migrationKey": key}}]}
                 }
             },
             timeout=10,
@@ -89,7 +90,7 @@ def get_records(es_url: str, key: str) -> list[dict]:
     except Exception:
         return []
 
-    hits = response.json()["hits"]["hits"]
+    hits: list[dict[str, Any]] = response.json()["hits"]["hits"]
     records = [hit["_source"]["migration"] for hit in hits]
     return sorted(records, key=lambda r: r["order"])
 
