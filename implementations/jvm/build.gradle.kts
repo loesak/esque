@@ -1,9 +1,22 @@
 plugins {
+  alias(libs.plugins.kotlin.jvm)
   alias(libs.plugins.vanniktech.publish)
+  alias(libs.plugins.ktfmt)
+  alias(libs.plugins.detekt)
   application
 }
 
+group = "org.loesak.esque"
+
+version = findProperty("projectVersion") as String? ?: "NONE"
+
 application { mainClass.set("org.loesak.esque.core.cli.MainKt") }
+
+repositories { mavenCentral() }
+
+kotlin { jvmToolchain(21) }
+
+detekt { config.setFrom(file("detekt.yml")) }
 
 dependencies {
   implementation(libs.kotlin.stdlib)

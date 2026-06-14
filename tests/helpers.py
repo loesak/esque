@@ -23,6 +23,7 @@ class Implementation:
     name: str
     invocation: str
     task: str | None = None
+    gradle_dir: str | None = None
     command: list[str] = field(default_factory=lambda: [])
 
 
@@ -56,8 +57,10 @@ def run(
             raise ValueError("Gradle implementation missing 'task' configuration")
         args_str = " ".join(esque_args)
         cmd = ["./gradlew", impl.task, f"--args={args_str}"]
+        cwd = ROOT_DIR / impl.gradle_dir if impl.gradle_dir else ROOT_DIR
     elif impl.invocation == "direct":
         cmd = [*impl.command, *esque_args]
+        cwd = ROOT_DIR
     else:
         raise ValueError(f"Unknown invocation type: {impl.invocation}")
 
@@ -65,7 +68,7 @@ def run(
         cmd,
         capture_output=True,
         text=True,
-        cwd=ROOT_DIR,
+        cwd=cwd,
         timeout=300,
     )
 
