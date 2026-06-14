@@ -14,6 +14,9 @@ abstract class AbstractElasticsearchIT {
         ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:9.3.0")
             .withEnv("xpack.security.enabled", "false")
             .withEnv("action.destructive_requires_name", "false")
+            .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
+            .withEnv("xpack.ml.enabled", "false")
+            .withEnv("node.store.allow_mmap", "false")
 
     init {
       ELASTICSEARCH.start()

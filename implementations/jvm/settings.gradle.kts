@@ -1,1 +1,1 @@
-rootProject.name = "esque-core"
+rootProject.name = "esque"
