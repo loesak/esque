@@ -69,9 +69,7 @@ def test_idempotent_execution(impl: Implementation, es_url: str) -> None:
 
 
 @implementations()
-def test_different_migration_keys_are_independent(
-    impl: Implementation, es_url: str
-) -> None:
+def test_different_migration_keys_are_independent(impl: Implementation, es_url: str) -> None:
     key_a = "independent-key-a"
     key_b = "independent-key-b"
 
@@ -126,45 +124,33 @@ def test_migration_history_checksum_is_present(impl: Implementation, es_url: str
     assert result.returncode == 0, f"esque failed:\n{result.stderr}"
 
     for record in get_records(es_url, key):
-        assert record.get("checksum") is not None, (
-            f"checksum missing on record {record['filename']}"
-        )
+        assert record.get("checksum") is not None, f"checksum missing on record {record['filename']}"
 
 
 @implementations()
-def test_migration_history_execution_time_is_non_negative(
-    impl: Implementation, es_url: str
-) -> None:
+def test_migration_history_execution_time_is_non_negative(impl: Implementation, es_url: str) -> None:
     key = "history-exectime-test"
     result = run(impl, es_url, key=key, migrations_dir=STANDARD_MIGRATIONS)
     assert result.returncode == 0, f"esque failed:\n{result.stderr}"
 
     for record in get_records(es_url, key):
-        assert record["executionTime"] >= 0, (
-            f"executionTime is negative on record {record['filename']}"
-        )
+        assert record["executionTime"] >= 0, f"executionTime is negative on record {record['filename']}"
 
 
 @implementations()
-def test_migration_history_installed_on_is_present(
-    impl: Implementation, es_url: str
-) -> None:
+def test_migration_history_installed_on_is_present(impl: Implementation, es_url: str) -> None:
     key = "history-installedon-test"
     result = run(impl, es_url, key=key, migrations_dir=STANDARD_MIGRATIONS)
     assert result.returncode == 0, f"esque failed:\n{result.stderr}"
 
     for record in get_records(es_url, key):
-        assert record.get("installedOn") is not None, (
-            f"installedOn missing on record {record['filename']}"
-        )
+        assert record.get("installedOn") is not None, f"installedOn missing on record {record['filename']}"
 
 
 @implementations()
 def test_migration_user_recorded_when_provided(impl: Implementation, es_url: str) -> None:
     key = "user-test"
-    result = run(
-        impl, es_url, key=key, migrations_dir=STANDARD_MIGRATIONS, user="test-user"
-    )
+    result = run(impl, es_url, key=key, migrations_dir=STANDARD_MIGRATIONS, user="test-user")
     assert result.returncode == 0, f"esque failed:\n{result.stderr}"
 
     for record in get_records(es_url, key):
@@ -191,9 +177,7 @@ def test_migration_user_null_when_not_provided(impl: Implementation, es_url: str
 
 
 @implementations()
-def test_template_substitution_creates_correct_index(
-    impl: Implementation, es_url: str
-) -> None:
+def test_template_substitution_creates_correct_index(impl: Implementation, es_url: str) -> None:
     result = run(
         impl,
         es_url,
@@ -219,9 +203,7 @@ def test_extra_template_properties_ignored(impl: Implementation, es_url: str) ->
 
 
 @implementations()
-def test_missing_template_property_fails_before_any_migration(
-    impl: Implementation, es_url: str
-) -> None:
+def test_missing_template_property_fails_before_any_migration(impl: Implementation, es_url: str) -> None:
     key = "missing-var-test"
     result = run(
         impl,
@@ -230,12 +212,8 @@ def test_missing_template_property_fails_before_any_migration(
         migrations_dir=TEMPLATED_MIGRATIONS,
         # no properties — #{indexName} is unresolvable
     )
-    assert result.returncode != 0, (
-        "Expected esque to fail with missing template variable, but it succeeded"
-    )
-    assert len(get_records(es_url, key)) == 0, (
-        "No migration records should be written when template validation fails"
-    )
+    assert result.returncode != 0, "Expected esque to fail with missing template variable, but it succeeded"
+    assert len(get_records(es_url, key)) == 0, "No migration records should be written when template validation fails"
 
 
 # ---------------------------------------------------------------------------
@@ -244,9 +222,7 @@ def test_missing_template_property_fails_before_any_migration(
 
 
 @implementations()
-def test_integrity_checksum_mismatch_causes_failure(
-    impl: Implementation, es_url: str
-) -> None:
+def test_integrity_checksum_mismatch_causes_failure(impl: Implementation, es_url: str) -> None:
     key = "checksum-mismatch-test"
 
     # First run: apply standard migrations
@@ -256,15 +232,11 @@ def test_integrity_checksum_mismatch_causes_failure(
 
     # Second run: same filenames, V1.0.0 has different content → checksum mismatch
     result = run(impl, es_url, key=key, migrations_dir=INTEGRITY_MODIFIED_MIGRATIONS)
-    assert result.returncode != 0, (
-        "Expected esque to fail due to checksum mismatch, but it succeeded"
-    )
+    assert result.returncode != 0, "Expected esque to fail due to checksum mismatch, but it succeeded"
 
 
 @implementations()
-def test_integrity_fewer_files_than_records_causes_failure(
-    impl: Implementation, es_url: str
-) -> None:
+def test_integrity_fewer_files_than_records_causes_failure(impl: Implementation, es_url: str) -> None:
     key = "fewer-files-test"
 
     # First run: apply all 3 standard migrations
@@ -274,9 +246,7 @@ def test_integrity_fewer_files_than_records_causes_failure(
 
     # Second run: only 2 migration files — 3 records but 2 files → should fail
     result = run(impl, es_url, key=key, migrations_dir=INTEGRITY_MISSING_MIGRATIONS)
-    assert result.returncode != 0, (
-        "Expected esque to fail when migration records outnumber local files"
-    )
+    assert result.returncode != 0, "Expected esque to fail when migration records outnumber local files"
 
 
 # ---------------------------------------------------------------------------
@@ -285,9 +255,7 @@ def test_integrity_fewer_files_than_records_causes_failure(
 
 
 @implementations()
-def test_version_ordering_is_numeric_not_lexicographic(
-    impl: Implementation, es_url: str
-) -> None:
+def test_version_ordering_is_numeric_not_lexicographic(impl: Implementation, es_url: str) -> None:
     key = "ordering-test"
     result = run(impl, es_url, key=key, migrations_dir=ORDERING_MIGRATIONS)
     assert result.returncode == 0, f"esque failed:\n{result.stderr}"
@@ -296,9 +264,5 @@ def test_version_ordering_is_numeric_not_lexicographic(
     assert len(records) == 2
 
     # V1.9.0 must come before V1.10.0 (numeric), not after (lexicographic)
-    assert records[0]["version"] == "1.9.0", (
-        f"Expected first record to be V1.9.0 but got V{records[0]['version']}"
-    )
-    assert records[1]["version"] == "1.10.0", (
-        f"Expected second record to be V1.10.0 but got V{records[1]['version']}"
-    )
+    assert records[0]["version"] == "1.9.0", f"Expected first record to be V1.9.0 but got V{records[0]['version']}"
+    assert records[1]["version"] == "1.10.0", f"Expected second record to be V1.10.0 but got V{records[1]['version']}"

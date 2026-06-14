@@ -29,10 +29,7 @@ class Implementation:
 def all_implementations() -> list[Implementation]:
     config_path = ROOT_DIR / "tests" / "implementations.yml"
     config: dict[str, Any] = yaml.safe_load(config_path.read_text())
-    return [
-        Implementation(name=name, **cfg)
-        for name, cfg in config["implementations"].items()
-    ]
+    return [Implementation(name=name, **cfg) for name, cfg in config["implementations"].items()]
 
 
 def run(
@@ -77,11 +74,7 @@ def get_records(es_url: str, key: str) -> list[dict[str, Any]]:
     try:
         response = httpx.post(
             f"{es_url}/.esque/_search",
-            json={
-                "query": {
-                    "bool": {"filter": [{"term": {"migration.migrationKey": key}}]}
-                }
-            },
+            json={"query": {"bool": {"filter": [{"term": {"migration.migrationKey": key}}]}}},
             timeout=10,
         )
         if response.status_code == 404:
@@ -97,13 +90,9 @@ def get_records(es_url: str, key: str) -> list[dict[str, Any]]:
 
 def assert_index_exists(es_url: str, index: str) -> None:
     response = httpx.head(f"{es_url}/{index}", timeout=10)
-    assert response.status_code == 200, (
-        f"Expected index '{index}' to exist but got HTTP {response.status_code}"
-    )
+    assert response.status_code == 200, f"Expected index '{index}' to exist but got HTTP {response.status_code}"
 
 
 def assert_index_absent(es_url: str, index: str) -> None:
     response = httpx.head(f"{es_url}/{index}", timeout=10)
-    assert response.status_code == 404, (
-        f"Expected index '{index}' to be absent but got HTTP {response.status_code}"
-    )
+    assert response.status_code == 404, f"Expected index '{index}' to be absent but got HTTP {response.status_code}"
