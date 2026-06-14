@@ -1,7 +1,13 @@
-plugins { alias(libs.plugins.vanniktech.publish) }
+plugins {
+  alias(libs.plugins.vanniktech.publish)
+  application
+}
+
+application { mainClass.set("org.loesak.esque.core.cli.MainKt") }
 
 dependencies {
   implementation(libs.kotlin.stdlib)
+  implementation(libs.clikt)
   api(libs.elasticsearch.rest.client)
   implementation(platform(libs.jackson.bom))
   implementation(libs.jackson.databind)
