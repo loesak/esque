@@ -54,9 +54,24 @@ esque/
 │   │           └── model/MigrationFile.kt
 │   └── python/                      # Python implementation
 │       ├── pyproject.toml           # uv project: click, httpx, pyyaml; hatchling build
-│       └── esque/
-│           ├── __init__.py
-│           └── __main__.py          # Full implementation + Click CLI in one file
+│       ├── src/esque/
+│       │   ├── configuration.py     # EsqueConfiguration dataclass
+│       │   ├── esque.py             # Main orchestrator + verify_integrity
+│       │   ├── cli.py               # Click CLI entrypoint
+│       │   ├── __main__.py          # python -m esque shim
+│       │   ├── elasticsearch/
+│       │   │   ├── documents.py     # INDEX_DEFINITION, constants
+│       │   │   ├── operations.py    # ES REST calls
+│       │   │   └── lock.py          # Distributed lock (op_type=create polling)
+│       │   └── migration/
+│       │       ├── model.py         # MigrationRequest, MigrationFile
+│       │       ├── template.py      # #{varName} validation and substitution
+│       │       └── loader.py        # File discovery, parsing, checksum
+│       └── tests/
+│           ├── test_model.py        # Version ordering
+│           ├── test_checksum.py     # Canonical checksum algorithm
+│           ├── test_template.py     # Template validation and substitution
+│           └── test_integrity.py    # verify_integrity error scenarios
 └── tests/                           # Black-box compatibility test harness
     ├── pyproject.toml               # uv project: pytest, testcontainers, httpx, pyyaml
     ├── implementations.yml          # Registered implementations with invocation config
@@ -285,8 +300,9 @@ Uses ES `op_type=create` for cross-process atomicity. The JVM also wraps this wi
 
 ## Python Code Conventions
 
-- **All code in `esque/__main__.py`** — single module, invoked as `python -m esque` or via the `esque` entry point script
-- **Strict typing**: all functions annotated; `cast()` used where isinstance-narrowing produces Unknown
+- **Package layout**: `src/esque/` with modules mirroring the JVM structure — `esque.py` (orchestrator), `configuration.py`, `cli.py`, `elasticsearch/` (documents, operations, lock), `migration/` (model, template, loader)
+- **Entry point**: `esque.cli:main`; `__main__.py` is a thin shim for `python -m esque`
+- **Strict typing**: all functions annotated; `cast()` used where isinstance-narrowing produces Unknown; `field(default_factory=lambda: [])` instead of `field(default_factory=list)` to satisfy pyright strict
 - **httpx**: ES REST calls (not elasticsearch-py, to avoid client version compatibility issues)
 - **PyYAML**: migration file parsing
 - **Click**: CLI with the same option names as the JVM Clikt interface
@@ -296,6 +312,16 @@ Uses ES `op_type=create` for cross-process atomicity. The JVM also wraps this wi
 ### JVM Integration Tests
 
 Live in `implementations/jvm/src/test/kotlin/` and are named `*IT`. Use JUnit 5, AssertJ, and testcontainers-elasticsearch. Run via `./gradlew test` (requires Docker).
+
+### Python Unit Tests
+
+Live in `implementations/python/tests/`. Pure unit tests (no ES), covering the most complex logic:
+- `test_model.py` — numeric version ordering (`1.9.0 < 1.10.0`)
+- `test_checksum.py` — canonical checksum algorithm properties
+- `test_template.py` — `#{varName}` validation and substitution across all request fields
+- `test_integrity.py` — all `verify_integrity` error scenarios
+
+Run via `uv run pytest` from `implementations/python/`.
 
 ### Compatibility Test Harness
 
