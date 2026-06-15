@@ -2,9 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(git -C *)",
-      "Bash(./gradlew :esque-core:test)",
-      "Bash(./gradlew :esque-core:compileTestKotlin)",
-      "Bash(./gradlew build)"
+      "Bash(./gradlew *)",
+      "Bash(uv *)"
     ]
   },
   "enabledPlugins": {
