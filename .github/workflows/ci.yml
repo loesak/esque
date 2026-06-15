@@ -41,11 +41,13 @@ jobs:
       - working-directory: implementations/python
         run: uv sync
       - working-directory: implementations/python
-        run: uv run ruff check esque/
+        run: uv run ruff check src/
       - working-directory: implementations/python
-        run: uv run ruff format --check esque/
+        run: uv run ruff format --check src/
       - working-directory: implementations/python
-        run: uv run pyright esque/
+        run: uv run pyright
+      - working-directory: implementations/python
+        run: uv run pytest
       - working-directory: implementations/python
         run: sed -i "s/^version = .*/version = \"$(../../.github/version_python.sh)\"/" pyproject.toml
       - working-directory: implementations/python

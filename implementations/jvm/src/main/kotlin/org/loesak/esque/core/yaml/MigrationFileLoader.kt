@@ -100,8 +100,20 @@ internal class MigrationFileLoader(
     }
 
     internal fun calculateChecksum(contents: MigrationFile.MigrationFileContents): Int {
+      val canonical =
+          mapOf(
+              "requests" to
+                  contents.requests.map { req ->
+                    buildMap<String, Any> {
+                      req.body?.let { put("body", it) }
+                      req.contentType?.let { put("contentType", it) }
+                      put("method", req.method)
+                      req.params?.let { put("params", it) }
+                      put("path", req.path)
+                    }
+                  })
       val digest = MessageDigest.getInstance("MD5")
-      digest.update(JSON_MAPPER_CANONICAL.writeValueAsBytes(contents))
+      digest.update(JSON_MAPPER_CANONICAL.writeValueAsBytes(canonical))
       return ByteBuffer.wrap(digest.digest()).int
     }
   }

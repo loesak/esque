@@ -99,3 +99,10 @@ def assert_index_exists(es_url: str, index: str) -> None:
 def assert_index_absent(es_url: str, index: str) -> None:
     response = httpx.head(f"{es_url}/{index}", timeout=10)
     assert response.status_code == 404, f"Expected index '{index}' to be absent but got HTTP {response.status_code}"
+
+
+def delete_indices(es_url: str, pattern: str) -> None:
+    try:
+        httpx.delete(f"{es_url}/{pattern}", timeout=10)
+    except Exception:
+        pass

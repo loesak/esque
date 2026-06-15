@@ -10,6 +10,7 @@ from helpers import (
     Implementation,
     all_implementations,
     assert_index_exists,
+    delete_indices,
     get_records,
     run,
 )
@@ -247,6 +248,45 @@ def test_integrity_fewer_files_than_records_causes_failure(impl: Implementation,
     # Second run: only 2 migration files — 3 records but 2 files → should fail
     result = run(impl, es_url, key=key, migrations_dir=INTEGRITY_MISSING_MIGRATIONS)
     assert result.returncode != 0, "Expected esque to fail when migration records outnumber local files"
+
+
+# ---------------------------------------------------------------------------
+# Cross-implementation equivalency
+# ---------------------------------------------------------------------------
+
+
+def test_cross_implementation_record_equivalency(es_url: str) -> None:
+    impls = all_implementations()
+    if len(impls) < 2:
+        pytest.skip("cross-implementation equivalency test requires at least 2 implementations")
+
+    records_by_impl: dict[str, list[dict[str, object]]] = {}
+    for impl in impls:
+        delete_indices(es_url, "test-*")
+        key = f"cross-compat-{impl.name}"
+        result = run(impl, es_url, key=key, migrations_dir=STANDARD_MIGRATIONS)
+        assert result.returncode == 0, f"{impl.name} failed:\n{result.stderr}"
+        records_by_impl[impl.name] = get_records(es_url, key)
+
+    impl_names = list(records_by_impl)
+    reference_name = impl_names[0]
+    reference_records = records_by_impl[reference_name]
+
+    for other_name in impl_names[1:]:
+        other_records = records_by_impl[other_name]
+
+        assert len(other_records) == len(reference_records), (
+            f"{other_name} produced {len(other_records)} records "
+            f"but {reference_name} produced {len(reference_records)}"
+        )
+
+        for ref, other in zip(reference_records, other_records, strict=True):
+            filename = ref["filename"]
+            for field in ("checksum", "order", "filename", "version", "description"):
+                assert other[field] == ref[field], (
+                    f"Field '{field}' differs for {filename}: "
+                    f"{reference_name}={ref[field]!r}, {other_name}={other[field]!r}"
+                )
 
 
 # ---------------------------------------------------------------------------
