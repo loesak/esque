@@ -1,11 +1,11 @@
-# esque-python
+# esque-py
 
 Python implementation of [Esque](../../README.md) — an Elasticsearch migration management library.
 
 ## Installation
 
 ```bash
-pip install esque
+pip install esque-py
 ```
 
 Requires Python 3.14+ and Elasticsearch 9+.

@@ -11,8 +11,8 @@ Specs live in `.claude/superpowers/specs/` named `YYYY-MM-DD-<topic>-design.md`.
 - **License:** Apache 2.0
 - **Implementations:** JVM (Kotlin 2.4.0, Java 21) · Python 3.14
 - **Target:** Elasticsearch 9+ (ES 9.4.x REST API)
-- **JVM published to:** Maven Central as `org.loesak.esque:esque-core`
-- **Python published to:** PyPI as `esque-python`
+- **JVM published to:** Maven Central as `org.loesak.esque:esque`
+- **Python published to:** PyPI as `esque-py`
 
 ## Repository Structure
 
@@ -30,7 +30,7 @@ esque/
 ├── implementations/
 │   ├── jvm/                         # JVM/Kotlin implementation
 │   │   ├── build.gradle.kts         # Single-project Gradle build (merged root + core)
-│   │   ├── settings.gradle.kts      # rootProject.name = "esque-core"
+│   │   ├── settings.gradle.kts      # rootProject.name = "esque"
 │   │   ├── gradle/
 │   │   │   ├── libs.versions.toml   # Gradle version catalog
 │   │   │   └── wrapper/             # Gradle wrapper (9.5.1)

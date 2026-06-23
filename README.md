@@ -35,19 +35,19 @@ Available on Maven Central. See [releases](https://github.com/loesak/esque/relea
 
 **Gradle (Kotlin DSL):**
 ```kotlin
-implementation("org.loesak.esque:esque-core:<version>")
+implementation("org.loesak.esque:esque:<version>")
 ```
 
 **Gradle (Groovy DSL):**
 ```groovy
-implementation 'org.loesak.esque:esque-core:<version>'
+implementation 'org.loesak.esque:esque:<version>'
 ```
 
 **Maven:**
 ```xml
 <dependency>
   <groupId>org.loesak.esque</groupId>
-  <artifactId>esque-core</artifactId>
+  <artifactId>esque</artifactId>
   <version><version></version>
 </dependency>
 ```
@@ -59,7 +59,7 @@ You supply the `RestClient`, so you configure it for whatever authentication mec
 Available on PyPI:
 
 ```bash
-pip install esque-python
+pip install esque-py
 ```
 
 Both implementations share the same CLI contract, migration file format, checksum algorithm, and ES document structure, so they are interchangeable for any given migration key.

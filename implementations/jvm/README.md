@@ -1,4 +1,4 @@
-# esque-core
+# esque
 
 JVM implementation of [Esque](../../README.md) — an Elasticsearch migration management library.
 
