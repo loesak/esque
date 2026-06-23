@@ -8,12 +8,31 @@ packages = ["src/esque"]
 [project]
 name = "esque-py"
 version = "0.1.0"
+description = "Elasticsearch migration management — repeatable, ordered query execution with history tracking and distributed locking"
+readme = "README.md"
 requires-python = ">=3.14"
+authors = [
+    { name = "Aaron Loes", email = "aaronloes@loesoft.com" },
+]
+keywords = ["elasticsearch", "migration", "database", "flyway"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries",
+]
 dependencies = [
     "click>=8.1.0",
     "elasticsearch>=9.0.0",
     "pyyaml>=6.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/loesak/esque"
+Repository = "https://github.com/loesak/esque"
+Issues = "https://github.com/loesak/esque/issues"
 
 [project.scripts]
 esque = "esque.cli:main"
