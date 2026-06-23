@@ -12,7 +12,7 @@ description = "Elasticsearch migration management — repeatable, ordered query 
 readme = "README.md"
 requires-python = ">=3.14"
 authors = [
-    { name = "Aaron Loes", email = "aaronloes@loesoft.com" },
+    { name = "Aaron Loes", email = "aaron.loes@gmail.com" },
 ]
 keywords = ["elasticsearch", "migration", "database", "flyway"]
 classifiers = [
