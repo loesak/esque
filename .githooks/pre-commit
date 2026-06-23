@@ -14,7 +14,7 @@ echo "[1/3] JVM: format, lint, test"
 (cd implementations/jvm && ./gradlew ktfmtCheck detekt test)
 
 echo "[2/3] Python: format, lint, typecheck"
-(cd implementations/python && uv run ruff check esque/ && uv run ruff format --check esque/ && uv run pyright esque/)
+(cd implementations/python && uv run ruff check src/esque/ && uv run ruff format --check src/esque/ && uv run pyright src/esque/)
 
 echo "[3/3] Compatibility tests"
 (cd tests && uv run pytest . -q)
