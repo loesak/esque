@@ -1,0 +1,17 @@
+- [x] checksum post templating
+- [x] property placeholders for query params
+- [x] needs configuration for:
+  - migration folder location
+  - migration index replica
+  - etc
+- [ ] multi-language support
+  - [ ] jvm (kotlin)
+  - [ ] python
+  - [ ] typescript
+  - [ ] go
+- [ ] project documentation using github pages?
+- [ ] always run migrations
+- [ ] .esque index creation - and future changes - uses own migration tooling (eat own dogfood)
+  - yaml files stored in library
+  - need means of tracking what operations have been applied. maybe doesn't need its own index but maybe index name can be an indicator? (e.g. .esque-v1/2/3/etc.)
+  - maybe don't do this until needed?

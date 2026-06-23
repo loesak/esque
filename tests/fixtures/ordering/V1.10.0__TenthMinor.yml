@@ -1,0 +1,5 @@
+---
+requests:
+  - method: "PUT"
+    path: "/test-index-minor-10"
+    contentType: application/json; charset=utf-8

@@ -21,7 +21,10 @@ RUN curl -s "https://get.sdkman.io" | bash \
     && sdk install java ${JAVA_VERSION} \
     && sdk install kotlin ${KOTLIN_VERSION}
 
-# install gh cli
+# install python things
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# install github cli
 RUN DEBIAN_FRONTEND=noninteractive \
     && (type -p wget >/dev/null || (apt update && apt install wget -y)) \
 	&& mkdir -p -m 755 /etc/apt/keyrings out=$(mktemp)  \

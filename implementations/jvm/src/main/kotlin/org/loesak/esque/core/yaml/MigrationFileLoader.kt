@@ -1,0 +1,120 @@
+package org.loesak.esque.core.yaml
+
+import com.fasterxml.jackson.annotation.JsonInclude
+import io.github.oshai.kotlinlogging.KotlinLogging
+import java.nio.ByteBuffer
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.security.MessageDigest
+import org.loesak.esque.core.yaml.model.MigrationFile
+import tools.jackson.databind.SerializationFeature
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.dataformat.yaml.YAMLMapper
+import tools.jackson.module.kotlin.KotlinModule
+
+private val log = KotlinLogging.logger {}
+
+internal class MigrationFileLoader(
+    private val migrationDirectory: String = "classpath:es.migration",
+    private val templateResolver: MigrationTemplateResolver = MigrationTemplateResolver(emptyMap()),
+) {
+
+  fun load(): List<MigrationFile> {
+    log.info { "Loading migration files from [$migrationDirectory]" }
+
+    val rawFiles =
+        Files.list(resolvePath(migrationDirectory))
+            .filter(Files::isRegularFile)
+            .filter { FILE_NAME_PATTERN.matches(it.toFile().name) }
+            .map { readRaw(it) }
+            .sorted()
+            .toList()
+
+    log.info { "Found [${rawFiles.size}] migration files" }
+
+    templateResolver.validate(rawFiles)
+
+    return rawFiles.map { file ->
+      val resolvedContents = templateResolver.resolveContents(file.contents)
+      file.copy(
+          metadata = file.metadata.copy(checksum = calculateChecksum(resolvedContents)),
+          contents = resolvedContents,
+      )
+    }
+  }
+
+  private fun resolvePath(directory: String): Path =
+      when {
+        directory.startsWith("classpath:") -> {
+          val path = directory.removePrefix("classpath:")
+          Paths.get(
+              checkNotNull(javaClass.classLoader.getResource("$path/")) {
+                    "Migration directory not found on classpath: $path"
+                  }
+                  .toURI())
+        }
+        directory.startsWith("file:") -> Paths.get(directory.removePrefix("file:"))
+        else ->
+            error(
+                "Unsupported migration directory scheme in '$directory'. Supported schemes: 'classpath:', 'file:'")
+      }
+
+  companion object {
+    private const val MIGRATION_DEFINITION_FILE_NAME_REGEX = "^V((\\d+\\.?)+)__(\\w+)\\.yml$"
+    private val FILE_NAME_PATTERN = Regex(MIGRATION_DEFINITION_FILE_NAME_REGEX)
+
+    private val YAML_MAPPER = YAMLMapper.builder().addModule(KotlinModule.Builder().build()).build()
+    private val JSON_MAPPER_CANONICAL =
+        JsonMapper.builder()
+            .addModule(KotlinModule.Builder().build())
+            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
+            .changeDefaultPropertyInclusion { it.withValueInclusion(JsonInclude.Include.NON_NULL) }
+            .build()
+
+    private fun readRaw(path: Path): MigrationFile {
+      val filename = path.toFile().name
+      log.info { "Reading contents of migration file [$filename]" }
+
+      val match =
+          FILE_NAME_PATTERN.matchEntire(filename)
+              ?: error("filename does not match expected pattern")
+
+      return try {
+        MigrationFile(
+            metadata =
+                MigrationFile.MigrationFileMetadata(
+                    filename = filename,
+                    version = match.groupValues[1],
+                    description = match.groupValues[3],
+                    checksum = 0,
+                ),
+            contents =
+                Files.newInputStream(path).use { stream ->
+                  YAML_MAPPER.readValue(stream, MigrationFile.MigrationFileContents::class.java)
+                },
+        )
+      } catch (e: Exception) {
+        throw RuntimeException("failed to read the contents of migration file [$filename]", e)
+      }
+    }
+
+    internal fun calculateChecksum(contents: MigrationFile.MigrationFileContents): Int {
+      val canonical =
+          mapOf(
+              "requests" to
+                  contents.requests.map { req ->
+                    buildMap<String, Any> {
+                      req.body?.let { put("body", it) }
+                      req.contentType?.let { put("contentType", it) }
+                      put("method", req.method)
+                      req.params?.let { put("params", it) }
+                      put("path", req.path)
+                    }
+                  })
+      val digest = MessageDigest.getInstance("MD5")
+      digest.update(JSON_MAPPER_CANONICAL.writeValueAsBytes(canonical))
+      return ByteBuffer.wrap(digest.digest()).int
+    }
+  }
+}

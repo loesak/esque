@@ -1,0 +1,61 @@
+[project]
+name = "esque-compatibility-tests"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "pytest>=8.3.0",
+    "testcontainers[elasticsearch]>=4.8.0",
+    "httpx>=0.27.0",
+    "pyyaml>=6.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.0",
+    "ruff>=0.11.0",
+    "ty>=0.0.0a6",
+]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.14"
+reportMissingTypeStubs = false
+
+[tool.ruff]
+target-version = "py314"
+line-length = 120
+
+[tool.ty.rules]
+# Treat all warn-level rules as errors
+ambiguous-protocol-member = "error"
+deprecated = "error"
+ignore-comment-unknown-rule = "error"
+ineffective-final = "error"
+invalid-enum-member-annotation = "error"
+invalid-ignore-comment = "error"
+invalid-legacy-positional-parameter = "error"
+invalid-named-tuple-override = "error"
+mismatched-type-name = "error"
+possibly-missing-implicit-call = "error"
+possibly-missing-submodule = "error"
+redundant-cast = "error"
+redundant-final-classvar = "error"
+subclass-of-dataclass-with-order = "error"
+undefined-reveal = "error"
+unresolved-global = "error"
+unsupported-base = "error"
+unused-awaitable = "error"
+unused-ignore-comment = "error"
+unused-type-ignore-comment = "error"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "RUF", # ruff-specific rules
+]

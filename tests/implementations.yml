@@ -1,0 +1,8 @@
+implementations:
+  jvm:
+    invocation: gradle
+    gradle_dir: "implementations/jvm"
+    task: "run"
+  python:
+    invocation: direct
+    command: ["uv", "run", "--project", "implementations/python", "esque"]
