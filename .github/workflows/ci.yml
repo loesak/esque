@@ -63,9 +63,44 @@ jobs:
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
+  typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - working-directory: implementations/typescript
+        run: npm ci
+      - working-directory: implementations/typescript
+        run: npx biome ci src tests
+      - working-directory: implementations/typescript
+        run: npm run typecheck
+      - working-directory: implementations/typescript
+        run: npm test
+      - working-directory: implementations/typescript
+        run: npm version --no-git-tag-version "$(../../.github/version_typescript.sh)"
+      - working-directory: implementations/typescript
+        run: npm run build
+      - working-directory: implementations/typescript
+        run: node dist/cli.js --help
+      - if: github.event_name != 'release'
+        working-directory: implementations/typescript
+        run: npm publish --tag dev
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - if: github.event_name == 'release'
+        working-directory: implementations/typescript
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   compatibility-tests:
     runs-on: ubuntu-latest
-    needs: [jvm, python]
+    needs: [jvm, python, typescript]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -78,5 +113,10 @@ jobs:
         with:
           python-version: "3.14"
       - run: uv sync --project implementations/python
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - working-directory: implementations/typescript
+        run: npm ci
       - working-directory: tests
         run: uv run pytest . -v
