@@ -44,6 +44,19 @@ test("cross-implementation reference vector", () => {
   assert.equal(result, -991565970);
 });
 
+test("cross-implementation reference vector with all fields", () => {
+  // 509953348 was generated from the Python reference implementation for this exact input;
+  // exercises alphabetical key ordering across all five canonical fields plus non-ASCII.
+  const r = req({
+    method: "POST",
+    path: "/x",
+    body: '{"a": "ü"}',
+    contentType: "application/json",
+    params: { q: "1" },
+  });
+  assert.equal(checksum([r]), 509953348);
+});
+
 test("multiple requests", () => {
   const r1 = req({ method: "PUT", path: "/index" });
   const r2 = req({ method: "POST", path: "/_aliases", body: "{}" });
