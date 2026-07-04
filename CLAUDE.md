@@ -252,7 +252,7 @@ A single **`ci.yml`** handles everything — checks, publishing, and compatibili
 
 ### Execution Flow
 
-Both implementations perform the same sequence:
+All three implementations perform the same sequence:
 
 1. **Initialize** — Create the `.esque` index in ES if it doesn't exist
 2. **Load** — Discover and parse YAML migration files from the migrations directory
@@ -284,14 +284,14 @@ Both implementations perform the same sequence:
 
 ### Checksum Algorithm
 
-Both implementations must produce identical checksums for the same resolved migration content:
+All three implementations must produce identical checksums for the same resolved migration content:
 
 1. Serialize the resolved request list as JSON: `{"requests": [{...}, ...]}` with keys sorted alphabetically and null fields omitted
 2. Encode as UTF-8
 3. Compute MD5 digest
 4. Take the first 4 bytes interpreted as a big-endian signed 32-bit integer
 
-This is the canonical algorithm since Phase 3. The JVM uses `JSON_MAPPER_CANONICAL` (Jackson with `ORDER_MAP_ENTRIES_BY_KEYS` + `NON_NULL`). Python uses `json.dumps(sort_keys=True, separators=(',', ':'))` after recursively removing None values.
+This is the canonical algorithm since Phase 3. The JVM uses `JSON_MAPPER_CANONICAL` (Jackson with `ORDER_MAP_ENTRIES_BY_KEYS` + `NON_NULL`). Python uses `json.dumps(sort_keys=True, separators=(',', ':'))` after recursively removing None values. TypeScript uses a hand-written `canonicalJson` serializer (sorted keys, null/undefined object values dropped, compact separators) before MD5-hashing.
 
 ### ES Document Structure
 
@@ -331,7 +331,7 @@ V{VERSION}__{DESCRIPTION}.yml
 
 ### Distributed Locking
 
-Uses ES `op_type=create` for cross-process atomicity. The JVM also wraps this with a local `ReentrantLock` for thread safety. Python polls at 100ms intervals. Both default to a 5-minute timeout.
+Uses ES `op_type=create` for cross-process atomicity. The JVM also wraps this with a local `ReentrantLock` for thread safety. Python polls at 100ms intervals. TypeScript polls at 100ms intervals like Python, using a boolean held-flag instead of a real mutex since Node is single-threaded. All three default to a 5-minute timeout.
 
 ## JVM Code Conventions
 
