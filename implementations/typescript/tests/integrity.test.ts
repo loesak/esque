@@ -95,3 +95,13 @@ test("throws when file missing for record", () => {
   const orphan = record(file("1.0.0", "Ghost"), 0);
   assert.throws(() => verify(esque(), [f], [orphan]), /could not find/);
 });
+
+test("throws when a record's order does not match the file's position", () => {
+  const f1 = file("1.0.0");
+  const f2 = file("1.1.0");
+  // f2 sits at index 1 in `files`, but the record claims order 0. Using order 0 (rather than a
+  // trailing-gap value) keeps this past the earlier "gap in history" check so it actually
+  // exercises verifyRecordIntegrity's order comparison.
+  const swapped = record(f2, 0);
+  assert.throws(() => verify(esque(), [f1, f2], [swapped]), /integrity/);
+});

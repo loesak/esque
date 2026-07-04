@@ -100,6 +100,7 @@ export class Esque {
   private async runMigrations(files: MigrationFile[]): Promise<void> {
     try {
       for (const file of files) {
+        let executionError: unknown;
         try {
           if (await this.lock.tryLock(this.configuration.lockTimeoutMinutes)) {
             const existing = await this.operations.getMigrationRecordForMigrationFile(file);
@@ -123,28 +124,39 @@ export class Esque {
             throw new Error("failed to acquire lock");
           }
         } catch (error) {
-          throw new Error(`Failed to execute queries in migration file [${file.metadata.filename}]`, {
+          executionError = new Error(`Failed to execute queries in migration file [${file.metadata.filename}]`, {
             cause: error,
           });
-        } finally {
-          await this.unlockIgnoringNotHeld();
+        }
+
+        // Never let a release failure silently replace an execution failure (or its success) —
+        // capture both separately instead of releasing in a `finally` that could throw over
+        // whatever the try/catch above was about to produce.
+        let releaseError: unknown;
+        try {
+          await this.lock.unlock();
+        } catch (error) {
+          if (!(error instanceof LockNotHeldError)) {
+            releaseError = error;
+          }
+        }
+
+        if (executionError !== undefined) {
+          if (releaseError !== undefined) {
+            console.warn(
+              `failed to release execution lock for migration file [${file.metadata.filename}] after a migration failure. you may need to manually delete the lock document yourself`,
+            );
+          }
+          throw executionError;
+        }
+        if (releaseError !== undefined) {
+          throw new Error(`Failed to release execution lock after migration file [${file.metadata.filename}]`, {
+            cause: releaseError,
+          });
         }
       }
     } catch (error) {
       throw new Error("failed to run migrations", { cause: error });
-    }
-  }
-
-  // Releasing a lock we never acquired (e.g. tryLock() failed) is expected — swallow just that
-  // case. Split out from runMigrations' finally block so the rethrow isn't a direct statement
-  // inside a finally clause (which would unsafely shadow the original error's control flow).
-  private async unlockIgnoringNotHeld(): Promise<void> {
-    try {
-      await this.lock.unlock();
-    } catch (error) {
-      if (!(error instanceof LockNotHeldError)) {
-        throw error;
-      }
     }
   }
 
