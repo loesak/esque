@@ -9,7 +9,7 @@ Specs live in `.claude/superpowers/specs/` named `YYYY-MM-DD-<topic>-design.md`.
 **Esque** (**E**lasticsearch **S**tateful **Qu**ery **E**xecutor) is a migration management library for Elasticsearch, similar to Flyway but for ES clusters. It executes pre-defined queries in order, tracks which have been applied, validates integrity, and supports distributed locking for safe concurrent execution.
 
 - **License:** Apache 2.0
-- **Implementations:** JVM (Kotlin 2.4.0, Java 21) · Python 3.14 · TypeScript (Node 22+)
+- **Implementations:** JVM (Kotlin 2.4.0, Java 21) · Python 3.14 · TypeScript 5.x (Node 22+)
 - **Target:** Elasticsearch 9+ (ES 9.4.x REST API)
 - **JVM published to:** Maven Central as `org.loesak.esque:esque`
 - **Python published to:** PyPI as `esque-py`
@@ -180,7 +180,7 @@ uv run esque --help
 ```bash
 cd implementations/typescript
 
-# install dependencies (required once — no auto-sync like uv/gradlew)
+# install dependencies
 npm install
 
 # format code
@@ -237,6 +237,11 @@ Version is derived from git tags via `version.sh`:
 
 - **Formatting/Linting**: [ruff](https://docs.astral.sh/ruff/) — Black-compatible, line-length 120. Run `uv run ruff format esque/` to auto-format.
 - **Type checking**: [pyright](https://github.com/microsoft/pyright) in `strict` mode + [ty](https://github.com/astral-sh/ty) with all warn-level rules escalated to errors. All code must be fully annotated.
+
+### TypeScript Code Style and Typing
+
+- **Formatting/Linting**: [Biome](https://biomejs.dev/) — one tool for both, analogous to ruff. Run `npm run format` to auto-format, `npm run lint` to check (requires `npm install` once beforehand).
+- **Type checking**: TypeScript in `strict` mode with `noUncheckedIndexedAccess`. Run `npm run typecheck`.
 
 ### CI/CD
 
@@ -363,13 +368,10 @@ Uses ES `op_type=create` for cross-process atomicity. The JVM also wraps this wi
 ## TypeScript Code Conventions
 
 - **Package layout**: `src/` mirrors the module structure used by JVM/Python — `esque.ts` (orchestrator), `configuration.ts`, `cli.ts`, `elasticsearch/` (documents, operations, lock), `migration/` (model, template, loader)
-- **Module system**: ESM-only (`"type": "module"` in package.json), strict TypeScript, Node.js 22+
-- **Formatting/Linting**: [Biome](https://biomejs.dev/) — one tool for both, analogous to ruff. Run `npm run format` to auto-format, `npm run lint` (or `npx biome ci src tests`, once dependencies are installed) to check.
-- **Type checking**: TypeScript in `strict` mode with `noUncheckedIndexedAccess`
+- **Module system**: ESM-only (`"type": "module"` in package.json), Node.js 22+
 - **@elastic/elasticsearch**: official TypeScript ES client (same choice as Python and JVM — needed for auth mechanisms, retries, and typed responses; a plain HTTP client was considered and rejected for the same reasons Python rejected it)
 - **commander**: CLI framework with the same option names as the Python Click / JVM Clikt interfaces
 - **yaml**: migration file parsing
-- **Unit tests**: `node:test`, run via `tsx` (no build step required) — covers version ordering, template resolution, canonical checksum (including a pinned cross-implementation reference vector), integrity verification, distributed lock behavior, and ES document (de)serialization
 
 ## Testing
 
@@ -386,6 +388,19 @@ Live in `implementations/python/tests/`. Pure unit tests (no ES), covering the m
 - `test_integrity.py` — all `verify_integrity` error scenarios
 
 Run via `uv run pytest` from `implementations/python/`.
+
+### TypeScript Unit Tests
+
+Live in `implementations/typescript/tests/`. Pure unit tests (no ES), covering the most complex logic:
+- `model.test.ts` — numeric version ordering (`1.9.0 < 1.10.0`)
+- `template.test.ts` — `#{varName}` validation and substitution across all request fields
+- `checksum.test.ts` — canonical checksum algorithm properties, including a pinned cross-implementation reference vector
+- `loader.test.ts` — migration file discovery, ordering, and fail-loud validation of malformed YAML
+- `lock.test.ts` — distributed lock acquisition/release/timeout behavior
+- `documents.test.ts` — ES document (de)serialization, including fail-loud validation of malformed records
+- `integrity.test.ts` — all `verifyStateIntegrity` error scenarios
+
+Run via `npm test` from `implementations/typescript/` (uses `node:test` via `tsx`, no build step required).
 
 ### Compatibility Test Harness
 
