@@ -58,18 +58,26 @@ export function migrationRecordToDocument(record: MigrationRecord): { migration:
   return { migration: doc };
 }
 
+function requireField(raw: Record<string, unknown>, field: string): unknown {
+  const value = raw[field];
+  if (value === undefined || value === null) {
+    throw new Error(`malformed migration record in .esque index: missing field '${field}'`);
+  }
+  return value;
+}
+
 export function migrationRecordFromDocument(source: Record<string, unknown>): MigrationRecord {
   const raw = source.migration as Record<string, unknown>;
   return {
-    migrationKey: String(raw.migrationKey),
-    order: Number(raw.order),
-    filename: String(raw.filename),
-    version: String(raw.version),
-    description: String(raw.description),
-    checksum: Number(raw.checksum),
+    migrationKey: String(requireField(raw, "migrationKey")),
+    order: Number(requireField(raw, "order")),
+    filename: String(requireField(raw, "filename")),
+    version: String(requireField(raw, "version")),
+    description: String(requireField(raw, "description")),
+    checksum: Number(requireField(raw, "checksum")),
     installedBy: raw.installedBy !== undefined && raw.installedBy !== null ? String(raw.installedBy) : null,
-    installedOn: String(raw.installedOn),
-    executionTime: Number(raw.executionTime),
+    installedOn: String(requireField(raw, "installedOn")),
+    executionTime: Number(requireField(raw, "executionTime")),
   };
 }
 
