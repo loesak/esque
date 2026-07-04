@@ -6,3 +6,6 @@ implementations:
   python:
     invocation: direct
     command: ["uv", "run", "--project", "implementations/python", "esque"]
+  typescript:
+    invocation: direct
+    command: ["npm", "exec", "--prefix", "implementations/typescript", "--", "tsx", "implementations/typescript/src/cli.ts"]
