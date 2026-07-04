@@ -58,7 +58,7 @@ esque/
 │   │   ├── pyproject.toml           # uv project: click, elasticsearch, pyyaml; hatchling build
 │   │   ├── src/esque/
 │   │   │   ├── configuration.py     # EsqueConfiguration dataclass
-│   │   │   ├── esque.py             # Main orchestrator + verify_integrity
+│   │   │   ├── esque.py             # Main orchestrator + _verify_state_integrity
 │   │   │   ├── cli.py               # Click CLI entrypoint
 │   │   │   ├── __main__.py          # python -m esque shim
 │   │   │   ├── elasticsearch/
@@ -73,12 +73,12 @@ esque/
 │   │       ├── test_model.py        # Version ordering
 │   │       ├── test_checksum.py     # Canonical checksum algorithm
 │   │       ├── test_template.py     # Template validation and substitution
-│   │       └── test_integrity.py    # verify_integrity error scenarios
+│   │       └── test_integrity.py    # _verify_state_integrity error scenarios
 │   └── typescript/                  # TypeScript implementation
 │       ├── package.json             # npm project: commander, @elastic/elasticsearch, yaml; tsc build
 │       ├── src/
 │       │   ├── configuration.ts     # EsqueConfiguration type
-│       │   ├── esque.ts             # Main orchestrator + verifyIntegrity
+│       │   ├── esque.ts             # Main orchestrator + verifyStateIntegrity
 │       │   ├── cli.ts               # commander CLI entrypoint
 │       │   ├── elasticsearch/
 │       │   │   ├── documents.ts     # INDEX_DEFINITION, constants
@@ -92,7 +92,7 @@ esque/
 │           ├── model.test.ts        # Version ordering
 │           ├── checksum.test.ts     # Canonical checksum algorithm
 │           ├── template.test.ts     # Template validation and substitution
-│           ├── integrity.test.ts    # verifyIntegrity error scenarios
+│           ├── integrity.test.ts    # verifyStateIntegrity error scenarios
 │           ├── loader.test.ts       # File discovery and parsing
 │           ├── lock.test.ts         # Distributed lock behavior
 │           └── documents.test.ts    # ES document (de)serialization
@@ -213,6 +213,7 @@ uv run pytest . -v
 # run against a specific implementation only
 uv run pytest . -v -k "jvm"
 uv run pytest . -v -k "python"
+uv run pytest . -v -k "typescript"
 ```
 
 ### GPG Signing (JVM)
@@ -385,7 +386,7 @@ Live in `implementations/python/tests/`. Pure unit tests (no ES), covering the m
 - `test_model.py` — numeric version ordering (`1.9.0 < 1.10.0`)
 - `test_checksum.py` — canonical checksum algorithm properties
 - `test_template.py` — `#{varName}` validation and substitution across all request fields
-- `test_integrity.py` — all `verify_integrity` error scenarios
+- `test_integrity.py` — all `_verify_state_integrity` error scenarios
 
 Run via `uv run pytest` from `implementations/python/`.
 
