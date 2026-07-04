@@ -36,7 +36,13 @@ const program = new Command()
   .option(
     "--lock-timeout-minutes <n>",
     "Lock acquisition timeout in minutes",
-    (value: string) => Number.parseInt(value, 10),
+    (value: string) => {
+      const parsed = Number.parseInt(value, 10);
+      if (Number.isNaN(parsed)) {
+        throw new InvalidArgumentError(`must be an integer, got: '${value}'`);
+      }
+      return parsed;
+    },
     5,
   )
   .option("--property <key=value>", "Template substitution property as key=value (repeatable)", collectProperty, {});
@@ -59,12 +65,13 @@ const configuration = createEsqueConfiguration({
   lockTimeoutMinutes: opts.lockTimeoutMinutes,
 });
 
-const esque = new Esque(new Client({ node: opts.esUrl }), configuration, opts.property);
+let esque: Esque | undefined;
 try {
+  esque = new Esque(new Client({ node: opts.esUrl }), configuration, opts.property);
   await esque.execute();
 } catch (error) {
   console.error(`Error: ${formatErrorChain(error)}`);
   process.exitCode = 1;
 } finally {
-  await esque.close();
+  await esque?.close();
 }
