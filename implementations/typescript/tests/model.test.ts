@@ -42,3 +42,8 @@ test("sort order", () => {
     ["1.0.0", "1.9.0", "1.10.0", "2.0.0"],
   );
 });
+
+test("description tiebreak when versions equal", () => {
+  assert.ok(compareMigrationFiles(file("1.0.0", "Alpha"), file("1.0.0", "Beta")) < 0);
+  assert.ok(compareMigrationFiles(file("1.0.0", "Beta"), file("1.0.0", "Alpha")) > 0);
+});
