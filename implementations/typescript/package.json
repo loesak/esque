@@ -1,0 +1,42 @@
+{
+  "name": "esque-ts",
+  "version": "0.0.0",
+  "description": "Esque (Elasticsearch Stateful Query Executor) — migration management for Elasticsearch, like Flyway for ES clusters",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "esque": "dist/cli.js"
+  },
+  "exports": {
+    ".": "./dist/esque.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loesak/esque.git"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome ci src tests",
+    "format": "biome format --write src tests",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@elastic/elasticsearch": "^9.0.0",
+    "commander": "^14.0.0",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
