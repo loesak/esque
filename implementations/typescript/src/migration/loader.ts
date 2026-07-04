@@ -85,24 +85,39 @@ function readRawFile(filePath: string, filename: string, match: RegExpExecArray)
     // int("") ValueError, instead of silently treating it as 0.
     throw new Error(`invalid migration filename: ${filename}`);
   }
-  const data = parse(readFileSync(filePath, "utf8")) as { requests: Record<string, unknown>[] };
+  const data = parse(readFileSync(filePath, "utf8")) as { requests?: unknown };
+  if (!Array.isArray(data?.requests)) {
+    throw new Error(`migration file [${filename}] must contain a 'requests' list`);
+  }
   return {
     metadata: { filename, version, description, checksum: 0 },
-    contents: { requests: data.requests.map((raw) => parseRequest(raw)) },
+    contents: { requests: data.requests.map((raw: unknown) => parseRequest(raw)) },
   };
 }
 
-function parseRequest(raw: Record<string, unknown>): MigrationFileRequestDefinition {
+function parseRequest(raw: unknown): MigrationFileRequestDefinition {
+  if (!isPlainObject(raw)) {
+    throw new Error("migration request definition must be a mapping");
+  }
+  if (!("method" in raw) || !("path" in raw)) {
+    throw new Error("migration request definition missing required field 'method' or 'path'");
+  }
+  let params: Record<string, string> | null = null;
+  if ("params" in raw) {
+    if (!isPlainObject(raw.params)) {
+      throw new Error("migration request 'params' must be a mapping of string keys to values");
+    }
+    params = Object.fromEntries(Object.entries(raw.params).map(([k, v]) => [String(k), String(v)]));
+  }
   return {
     method: String(raw.method),
     path: String(raw.path),
     contentType: "contentType" in raw ? String(raw.contentType) : null,
-    params:
-      "params" in raw
-        ? Object.fromEntries(
-            Object.entries(raw.params as Record<string, unknown>).map(([k, v]) => [String(k), String(v)]),
-          )
-        : null,
+    params,
     body: "body" in raw ? String(raw.body) : null,
   };
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
