@@ -78,3 +78,20 @@ test("resolve handles no template vars", () => {
   assert.equal(result.path, "/index");
   assert.equal(result.body, '{"key": "value"}');
 });
+
+test("validate treats Object.prototype member names as missing vars", () => {
+  const r = req({ method: "PUT", path: "/#{toString}" });
+  assert.throws(() => new MigrationTemplateResolver({}).validate([fileOf(r)]), /toString/);
+});
+
+test("resolve handles adjacent placeholders", () => {
+  const r = req({ method: "PUT", path: "/#{a}#{b}" });
+  const result = new MigrationTemplateResolver({ a: "x", b: "y" }).resolve(r);
+  assert.equal(result.path, "/xy");
+});
+
+test("resolve inserts property values containing dollar patterns literally", () => {
+  const r = req({ method: "POST", path: "/", body: "#{v}" });
+  const result = new MigrationTemplateResolver({ v: "cost: $& and $1" }).resolve(r);
+  assert.equal(result.body, "cost: $& and $1");
+});

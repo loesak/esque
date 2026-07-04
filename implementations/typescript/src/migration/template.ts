@@ -23,7 +23,7 @@ export class MigrationTemplateResolver {
         for (const text of texts) {
           for (const match of text.matchAll(PLACEHOLDER_PATTERN)) {
             const key = match[1];
-            if (key !== undefined && !(key in this.properties)) {
+            if (key !== undefined && !Object.hasOwn(this.properties, key)) {
               missing.add(key);
             }
           }
@@ -57,7 +57,7 @@ export class MigrationTemplateResolver {
 
   private substitute(text: string): string {
     return text.replace(PLACEHOLDER_PATTERN, (_match, key: string) => {
-      const value = this.properties[key];
+      const value = Object.hasOwn(this.properties, key) ? this.properties[key] : undefined;
       if (value === undefined) {
         throw new Error(`unresolved template variable '#{${key}}' — was validate() called?`);
       }
