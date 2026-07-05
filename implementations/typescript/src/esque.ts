@@ -1,6 +1,10 @@
 import type { Client } from "@elastic/elasticsearch";
 import type { EsqueConfiguration } from "./configuration.js";
 import type { MigrationRecord } from "./elasticsearch/documents.js";
+
+export type { EsqueConfiguration } from "./configuration.js";
+export { createEsqueConfiguration } from "./configuration.js";
+
 import { ElasticsearchDocumentLock, LockNotHeldError } from "./elasticsearch/lock.js";
 import { RestClientOperations } from "./elasticsearch/operations.js";
 import { MigrationFileLoader } from "./migration/loader.js";

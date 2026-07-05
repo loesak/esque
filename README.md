@@ -27,7 +27,7 @@ It is Flyway-esque but for Elasticsearch.
 
 ## Implementations
 
-Esque is available as both a **JVM library** (Kotlin/Java) and a **Python package**.
+Esque is available as a **JVM library** (Kotlin/Java), a **Python package**, and a **TypeScript/npm package**.
 
 ### JVM (Kotlin/Java)
 
@@ -62,7 +62,17 @@ Available on PyPI:
 pip install esque-py
 ```
 
-Both implementations share the same CLI contract, migration file format, checksum algorithm, and ES document structure, so they are interchangeable for any given migration key.
+### TypeScript
+
+Available on npm:
+
+```bash
+npm install esque-ts
+```
+
+Requires Node.js 22+. Also ships a standalone CLI (`npx esque-ts`).
+
+All three implementations share the same CLI contract, migration file format, checksum algorithm, and ES document structure, so they are interchangeable for any given migration key.
 
 ## Migration File Format
 
@@ -106,4 +116,4 @@ Each request supports: `method` (required), `path` (required), `contentType`, `p
 
 - No rollback on failure
 - No "always run" migrations
-- Esque tracks history per `migrationKey` — different implementations writing to the same key must use the same checksum algorithm (both do; they use JSON canonical MD5)
+- Esque tracks history per `migrationKey` — different implementations writing to the same key must use the same checksum algorithm (all do; they use JSON canonical MD5)
