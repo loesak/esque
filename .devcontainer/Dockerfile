@@ -24,6 +24,13 @@ RUN curl -s "https://get.sdkman.io" | bash \
 # install python things
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
+# install node things
+ARG NODE_VERSION=24
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash \
+    && source ${HOME}/.nvm/nvm.sh \
+    && nvm install ${NODE_VERSION} \
+    && nvm alias default ${NODE_VERSION}
+
 # install github cli
 RUN DEBIAN_FRONTEND=noninteractive \
     && (type -p wget >/dev/null || (apt update && apt install wget -y)) \

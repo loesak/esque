@@ -9,10 +9,11 @@ Specs live in `.claude/superpowers/specs/` named `YYYY-MM-DD-<topic>-design.md`.
 **Esque** (**E**lasticsearch **S**tateful **Qu**ery **E**xecutor) is a migration management library for Elasticsearch, similar to Flyway but for ES clusters. It executes pre-defined queries in order, tracks which have been applied, validates integrity, and supports distributed locking for safe concurrent execution.
 
 - **License:** Apache 2.0
-- **Implementations:** JVM (Kotlin 2.4.0, Java 21) · Python 3.14
+- **Implementations:** JVM (Kotlin 2.4.0, Java 21) · Python 3.14 · TypeScript 5.x (Node 22+)
 - **Target:** Elasticsearch 9+ (ES 9.4.x REST API)
 - **JVM published to:** Maven Central as `org.loesak.esque:esque`
 - **Python published to:** PyPI as `esque-py`
+- **TypeScript published to:** npm as `esque-ts`
 
 ## Repository Structure
 
@@ -20,10 +21,11 @@ Specs live in `.claude/superpowers/specs/` named `YYYY-MM-DD-<topic>-design.md`.
 esque/
 ├── setup-hooks.sh                   # One-time dev setup: activates git pre-commit hook
 ├── .githooks/
-│   └── pre-commit                   # [1] JVM checks [2] Python checks [3] compat tests
+│   └── pre-commit                   # [1] JVM checks [2] Python checks [3] TypeScript checks [4] compat tests
 ├── .github/
 │   ├── version_jvm.sh               # Git-tag-based version for JVM (X.Y.Z or X.Y.Z-...-SNAPSHOT)
 │   ├── version_python.sh            # PEP 440 version for Python (X.Y.Z or X.Y.Z.devN)
+│   ├── version_typescript.sh        # SemVer version for TypeScript (X.Y.Z or X.Y.Z-dev.N)
 │   └── workflows/
 │       └── ci.yml                   # lint + build + publish + compatibility-tests
 ├── .devcontainer/                   # Dev container (Ubuntu, Zulu JDK 21)
@@ -52,26 +54,48 @@ esque/
 │   │           ├── MigrationFileLoader.kt
 │   │           ├── MigrationTemplateResolver.kt
 │   │           └── model/MigrationFile.kt
-│   └── python/                      # Python implementation
-│       ├── pyproject.toml           # uv project: click, httpx, pyyaml; hatchling build
-│       ├── src/esque/
-│       │   ├── configuration.py     # EsqueConfiguration dataclass
-│       │   ├── esque.py             # Main orchestrator + verify_integrity
-│       │   ├── cli.py               # Click CLI entrypoint
-│       │   ├── __main__.py          # python -m esque shim
+│   ├── python/                      # Python implementation
+│   │   ├── pyproject.toml           # uv project: click, elasticsearch, pyyaml; hatchling build
+│   │   ├── src/esque/
+│   │   │   ├── configuration.py     # EsqueConfiguration dataclass
+│   │   │   ├── esque.py             # Main orchestrator + _verify_state_integrity
+│   │   │   ├── cli.py               # Click CLI entrypoint
+│   │   │   ├── __main__.py          # python -m esque shim
+│   │   │   ├── elasticsearch/
+│   │   │   │   ├── documents.py     # INDEX_DEFINITION, constants
+│   │   │   │   ├── operations.py    # ES REST calls
+│   │   │   │   └── lock.py          # Distributed lock (op_type=create polling)
+│   │   │   └── migration/
+│   │   │       ├── model.py         # MigrationRequest, MigrationFile
+│   │   │       ├── template.py      # #{varName} validation and substitution
+│   │   │       └── loader.py        # File discovery, parsing, checksum
+│   │   └── tests/
+│   │       ├── test_model.py        # Version ordering
+│   │       ├── test_checksum.py     # Canonical checksum algorithm
+│   │       ├── test_template.py     # Template validation and substitution
+│   │       └── test_integrity.py    # _verify_state_integrity error scenarios
+│   └── typescript/                  # TypeScript implementation
+│       ├── package.json             # npm project: commander, @elastic/elasticsearch, yaml; tsc build
+│       ├── src/
+│       │   ├── configuration.ts     # EsqueConfiguration type
+│       │   ├── esque.ts             # Main orchestrator + verifyStateIntegrity
+│       │   ├── cli.ts               # commander CLI entrypoint
 │       │   ├── elasticsearch/
-│       │   │   ├── documents.py     # INDEX_DEFINITION, constants
-│       │   │   ├── operations.py    # ES REST calls
-│       │   │   └── lock.py          # Distributed lock (op_type=create polling)
+│       │   │   ├── documents.ts     # INDEX_DEFINITION, constants
+│       │   │   ├── operations.ts    # ES REST calls
+│       │   │   └── lock.ts          # Distributed lock (op_type=create polling)
 │       │   └── migration/
-│       │       ├── model.py         # MigrationRequest, MigrationFile
-│       │       ├── template.py      # #{varName} validation and substitution
-│       │       └── loader.py        # File discovery, parsing, checksum
+│       │       ├── model.ts         # MigrationRequest, MigrationFile
+│       │       ├── template.ts      # #{varName} validation and substitution
+│       │       └── loader.ts        # File discovery, parsing, checksum
 │       └── tests/
-│           ├── test_model.py        # Version ordering
-│           ├── test_checksum.py     # Canonical checksum algorithm
-│           ├── test_template.py     # Template validation and substitution
-│           └── test_integrity.py    # verify_integrity error scenarios
+│           ├── model.test.ts        # Version ordering
+│           ├── checksum.test.ts     # Canonical checksum algorithm
+│           ├── template.test.ts     # Template validation and substitution
+│           ├── integrity.test.ts    # verifyStateIntegrity error scenarios
+│           ├── loader.test.ts       # File discovery and parsing
+│           ├── lock.test.ts         # Distributed lock behavior
+│           └── documents.test.ts    # ES document (de)serialization
 └── tests/                           # Black-box compatibility test harness
     ├── pyproject.toml               # uv project: pytest, testcontainers, httpx, pyyaml
     ├── implementations.yml          # Registered implementations with invocation config
@@ -93,6 +117,7 @@ esque/
 
 - Java 21 (Zulu distribution recommended)
 - uv (Python package manager — `curl -LsSf https://astral.sh/uv/install.sh | sh`)
+- Node.js 22+ (24 recommended) and npm
 - Docker (for integration tests and compatibility tests via testcontainers)
 
 ### First-time setup
@@ -150,6 +175,33 @@ uv run pyright esque/
 uv run esque --help
 ```
 
+### TypeScript Commands (run from `implementations/typescript/`)
+
+```bash
+cd implementations/typescript
+
+# install dependencies
+npm install
+
+# format code
+npm run format
+
+# check formatting and lint
+npm run lint
+
+# typecheck
+npm run typecheck
+
+# run unit tests
+npm test
+
+# build (emits dist/)
+npm run build
+
+# run the CLI
+npx tsx src/cli.ts --help
+```
+
 ### Compatibility Tests (run from `tests/`)
 
 ```bash
@@ -161,6 +213,7 @@ uv run pytest . -v
 # run against a specific implementation only
 uv run pytest . -v -k "jvm"
 uv run pytest . -v -k "python"
+uv run pytest . -v -k "typescript"
 ```
 
 ### GPG Signing (JVM)
@@ -186,6 +239,11 @@ Version is derived from git tags via `version.sh`:
 - **Formatting/Linting**: [ruff](https://docs.astral.sh/ruff/) — Black-compatible, line-length 120. Run `uv run ruff format esque/` to auto-format.
 - **Type checking**: [pyright](https://github.com/microsoft/pyright) in `strict` mode + [ty](https://github.com/astral-sh/ty) with all warn-level rules escalated to errors. All code must be fully annotated.
 
+### TypeScript Code Style and Typing
+
+- **Formatting/Linting**: [Biome](https://biomejs.dev/) — one tool for both, analogous to ruff. Run `npm run format` to auto-format, `npm run lint` to check (requires `npm install` once beforehand).
+- **Type checking**: TypeScript in `strict` mode with `noUncheckedIndexedAccess`. Run `npm run typecheck`.
+
 ### CI/CD
 
 A single **`ci.yml`** handles everything — checks, publishing, and compatibility tests:
@@ -193,13 +251,14 @@ A single **`ci.yml`** handles everything — checks, publishing, and compatibili
 - **Triggers**: push to `master` · PRs to `master` · published GitHub releases
 - **`jvm`**: ktfmtCheck + detekt + build + publish on every build. vanniktech plugin routes automatically — `*-SNAPSHOT` versions go to OSSRH snapshots, release versions go to Maven Central staging.
 - **`python`**: ruff + pyright + build + publish on every build. Version is computed by `.github/version_python.sh` (PEP 440: `X.Y.Z` on exact tag, `X.Y.Z.devN` otherwise) and patched into `pyproject.toml` before building. Non-release builds publish to TestPyPI (`TEST_PYPI_TOKEN`); release builds publish to PyPI (`PYPI_TOKEN`).
-- **`compatibility-tests`**: needs `jvm` + `python`; runs 34 pytest scenarios via testcontainers.
+- **`typescript`**: Biome + tsc + node:test + build + a compiled dist/cli.js smoke test, then publish on every build. Version from `.github/version_typescript.sh` (SemVer: `X.Y.Z` on exact tag, `X.Y.Z-dev.N` otherwise) patched into `package.json` before building. Non-release builds publish to npm under the `dev` dist-tag (`NPM_TOKEN` secret); release builds publish to `latest`.
+- **`compatibility-tests`**: needs `jvm` + `python` + `typescript`; runs 52 pytest scenarios (17 × 3 implementations + 1 cross-implementation equivalency test) via testcontainers.
 
 ## Architecture
 
 ### Execution Flow
 
-Both implementations perform the same sequence:
+All three implementations perform the same sequence:
 
 1. **Initialize** — Create the `.esque` index in ES if it doesn't exist
 2. **Load** — Discover and parse YAML migration files from the migrations directory
@@ -231,14 +290,14 @@ Both implementations perform the same sequence:
 
 ### Checksum Algorithm
 
-Both implementations must produce identical checksums for the same resolved migration content:
+All three implementations must produce identical checksums for the same resolved migration content:
 
 1. Serialize the resolved request list as JSON: `{"requests": [{...}, ...]}` with keys sorted alphabetically and null fields omitted
 2. Encode as UTF-8
 3. Compute MD5 digest
 4. Take the first 4 bytes interpreted as a big-endian signed 32-bit integer
 
-This is the canonical algorithm since Phase 3. The JVM uses `JSON_MAPPER_CANONICAL` (Jackson with `ORDER_MAP_ENTRIES_BY_KEYS` + `NON_NULL`). Python uses `json.dumps(sort_keys=True, separators=(',', ':'))` after recursively removing None values.
+This is the canonical algorithm since Phase 3. The JVM uses `JSON_MAPPER_CANONICAL` (Jackson with `ORDER_MAP_ENTRIES_BY_KEYS` + `NON_NULL`). Python uses `json.dumps(sort_keys=True, separators=(',', ':'))` after recursively removing None values. TypeScript uses a hand-written `canonicalJson` serializer (sorted keys, null/undefined object values dropped, compact separators) before MD5-hashing.
 
 ### ES Document Structure
 
@@ -278,7 +337,7 @@ V{VERSION}__{DESCRIPTION}.yml
 
 ### Distributed Locking
 
-Uses ES `op_type=create` for cross-process atomicity. The JVM also wraps this with a local `ReentrantLock` for thread safety. Python polls at 100ms intervals. Both default to a 5-minute timeout.
+Uses ES `op_type=create` for cross-process atomicity. The JVM also wraps this with a local `ReentrantLock` for thread safety. Python polls at 100ms intervals. TypeScript polls at 100ms intervals like Python, using a boolean held-flag instead of a real mutex since Node is single-threaded. All three default to a 5-minute timeout.
 
 ## JVM Code Conventions
 
@@ -303,9 +362,17 @@ Uses ES `op_type=create` for cross-process atomicity. The JVM also wraps this wi
 - **Package layout**: `src/esque/` with modules mirroring the JVM structure — `esque.py` (orchestrator), `configuration.py`, `cli.py`, `elasticsearch/` (documents, operations, lock), `migration/` (model, template, loader)
 - **Entry point**: `esque.cli:main`; `__main__.py` is a thin shim for `python -m esque`
 - **Strict typing**: all functions annotated; `cast()` used where isinstance-narrowing produces Unknown; `field(default_factory=lambda: [])` instead of `field(default_factory=list)` to satisfy pyright strict
-- **httpx**: ES REST calls (not elasticsearch-py, to avoid client version compatibility issues)
+- **elasticsearch**: official Python ES client (>=9) — handles auth mechanisms, retries, and typed responses
 - **PyYAML**: migration file parsing
 - **Click**: CLI with the same option names as the JVM Clikt interface
+
+## TypeScript Code Conventions
+
+- **Package layout**: `src/` mirrors the module structure used by JVM/Python — `esque.ts` (orchestrator), `configuration.ts`, `cli.ts`, `elasticsearch/` (documents, operations, lock), `migration/` (model, template, loader)
+- **Module system**: ESM-only (`"type": "module"` in package.json), Node.js 22+
+- **@elastic/elasticsearch**: official TypeScript ES client (same choice as Python and JVM — needed for auth mechanisms, retries, and typed responses; a plain HTTP client was considered and rejected for the same reasons Python rejected it)
+- **commander**: CLI framework with the same option names as the Python Click / JVM Clikt interfaces
+- **yaml**: migration file parsing
 
 ## Testing
 
@@ -319,9 +386,22 @@ Live in `implementations/python/tests/`. Pure unit tests (no ES), covering the m
 - `test_model.py` — numeric version ordering (`1.9.0 < 1.10.0`)
 - `test_checksum.py` — canonical checksum algorithm properties
 - `test_template.py` — `#{varName}` validation and substitution across all request fields
-- `test_integrity.py` — all `verify_integrity` error scenarios
+- `test_integrity.py` — all `_verify_state_integrity` error scenarios
 
 Run via `uv run pytest` from `implementations/python/`.
+
+### TypeScript Unit Tests
+
+Live in `implementations/typescript/tests/`. Pure unit tests (no ES), covering the most complex logic:
+- `model.test.ts` — numeric version ordering (`1.9.0 < 1.10.0`)
+- `template.test.ts` — `#{varName}` validation and substitution across all request fields
+- `checksum.test.ts` — canonical checksum algorithm properties, including a pinned cross-implementation reference vector
+- `loader.test.ts` — migration file discovery, ordering, and fail-loud validation of malformed YAML
+- `lock.test.ts` — distributed lock acquisition/release/timeout behavior
+- `documents.test.ts` — ES document (de)serialization, including fail-loud validation of malformed records
+- `integrity.test.ts` — all `verifyStateIntegrity` error scenarios
+
+Run via `npm test` from `implementations/typescript/` (uses `node:test` via `tsx`, no build step required).
 
 ### Compatibility Test Harness
 
@@ -329,7 +409,8 @@ Lives in `tests/` as a standalone uv project. Each test invokes an implementatio
 
 - **Fixture**: one session-scoped ES container (`ElasticSearchContainer`), cleaned between tests with `DELETE /.esque` and `DELETE /test-*`
 - **Parametrized**: every test function is parametrized over `all_implementations()` which reads `tests/implementations.yml`
-- **Adding a new implementation**: add an entry to `implementations.yml` with `invocation: direct` and a `command` list; tests run automatically
+- **Scenario count**: 17 parametrized scenarios × 3 implementations + 1 cross-implementation equivalency test = 52 pytest cases
+- **Adding a new implementation**: add an entry to `implementations.yml` with `invocation: direct` and a `command` list; tests run automatically. TypeScript runs via `tsx` directly against `src/cli.ts` with no build step required (only `npm ci` beforehand needed), analogous to how `uv run` auto-syncs for Python.
 
 ### Registered Implementations (`tests/implementations.yml`)
 
@@ -342,11 +423,14 @@ implementations:
   python:
     invocation: direct
     command: ["uv", "run", "--project", "implementations/python", "esque"]
+  typescript:
+    invocation: direct
+    command: ["npm", "exec", "--prefix", "implementations/typescript", "--", "tsx", "implementations/typescript/src/cli.ts"]
 ```
 
 ## Known TODOs in Code
 
-- Differentiate lock creation failure vs. lock-already-exists (JVM `RestClientOperations`)
+- Differentiate lock creation failure vs. lock-already-exists (present in all three implementations: JVM `RestClientOperations`, Python `lock.py`, TypeScript `lock.ts`)
 - Configurable lock timeout for long-running queries (`Esque.kt`)
 - Consider writing "FAILED" migration records (`Esque.kt`)
 - Rollback/undo capability

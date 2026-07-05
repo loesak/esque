@@ -10,13 +10,17 @@ fi
 
 echo "Running pre-commit checks..."
 
-echo "[1/3] JVM: format, lint, test"
+echo "[1/4] JVM: format, lint, test"
 (cd implementations/jvm && ./gradlew ktfmtCheck detekt test)
 
-echo "[2/3] Python: format, lint, typecheck"
+echo "[2/4] Python: format, lint, typecheck"
 (cd implementations/python && uv run ruff check src/esque/ && uv run ruff format --check src/esque/ && uv run pyright src/esque/)
 
-echo "[3/3] Compatibility tests"
+# Requires a one-time `npm install` in implementations/typescript/ (no auto-sync like uv/gradlew).
+echo "[3/4] TypeScript: format, lint, typecheck, test"
+(cd implementations/typescript && npm run lint && npm run typecheck && npm test)
+
+echo "[4/4] Compatibility tests"
 (cd tests && uv run pytest . -q)
 
 echo "Pre-commit checks passed."
