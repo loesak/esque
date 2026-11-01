@@ -8,6 +8,11 @@ on:
   release:
     types: [published]
 
+env:
+  # Pull requests from forks and from Dependabot run without Actions secrets, so
+  # publishing would fail. Skip publish for them; lint/build/test still run.
+  CAN_PUBLISH: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]') }}
+
 jobs:
   jvm:
     runs-on: ubuntu-latest
@@ -21,7 +26,8 @@ jobs:
           java-version: 21
       - working-directory: implementations/jvm
         run: ./gradlew -PprojectVersion=$(../../.github/version_jvm.sh) ktfmtCheck detekt build
-      - working-directory: implementations/jvm
+      - if: env.CAN_PUBLISH == 'true'
+        working-directory: implementations/jvm
         run: ./gradlew -PprojectVersion=$(../../.github/version_jvm.sh) publish -x test
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.OSSRH_USERNAME }}
@@ -52,7 +58,7 @@ jobs:
         run: sed -i "s/^version = .*/version = \"$(../../.github/version_python.sh)\"/" pyproject.toml
       - working-directory: implementations/python
         run: uv build
-      - if: github.event_name != 'release'
+      - if: github.event_name != 'release' && env.CAN_PUBLISH == 'true'
         working-directory: implementations/python
         run: uv publish --publish-url https://test.pypi.org/legacy/
         env:
@@ -87,7 +93,7 @@ jobs:
         run: npm run build
       - working-directory: implementations/typescript
         run: node dist/cli.js --help
-      - if: github.event_name != 'release'
+      - if: github.event_name != 'release' && env.CAN_PUBLISH == 'true'
         working-directory: implementations/typescript
         run: npm publish --tag dev
         env:
