@@ -92,16 +92,18 @@ constructor(
     val companion =
         files.firstOrNull { it.metadata.filename == record.filename }
             ?: error(
-                "could not find migration file matching migration history record by filename [${record.filename}]")
+                "could not find migration file matching migration history record by filename [${record.filename}]"
+            )
 
     check(
         record.order == files.indexOf(companion) &&
             record.version == companion.metadata.version &&
             record.description == companion.metadata.description &&
             record.checksum == companion.metadata.checksum &&
-            record.migrationKey == configuration.migrationKey) {
-          "could not verify integrity of migration history record for filename [${record.filename}]. did you refactor your migration scripts after a previous execution?"
-        }
+            record.migrationKey == configuration.migrationKey
+    ) {
+      "could not verify integrity of migration history record for filename [${record.filename}]. did you refactor your migration scripts after a previous execution?"
+    }
   }
 
   private fun runMigrations(files: List<MigrationFile>) {
@@ -115,8 +117,10 @@ constructor(
               "Lock acquired. Executing queries defined in migration file [${file.metadata.filename}]"
             }
 
-            if (operations.getMigrationRecordForMigrationFile(file, configuration.migrationKey) !=
-                null) {
+            if (
+                operations.getMigrationRecordForMigrationFile(file, configuration.migrationKey) !=
+                    null
+            ) {
               log.info {
                 "Migration for migration file [${file.metadata.filename}] and migration key [${configuration.migrationKey}] appears to already have been executed. Skipping"
               }
@@ -141,7 +145,8 @@ constructor(
                       installedBy = configuration.migrationUser,
                       installedOn = end,
                       executionTime = duration,
-                  ))
+                  )
+              )
             }
           } else {
             // TODO: this could happen for long running queries. need to look for something a bit
@@ -153,7 +158,9 @@ constructor(
           }
         } catch (e: Exception) {
           throw RuntimeException(
-              "Failed to execute queries in migration file [${file.metadata.filename}]", e)
+              "Failed to execute queries in migration file [${file.metadata.filename}]",
+              e,
+          )
           // TODO: should we write a "FAILED" migration record?
         } finally {
           log.info { "Releasing execution lock" }
@@ -181,7 +188,8 @@ constructor(
       } catch (e: Exception) {
         throw IllegalStateException(
             "Failed to execute query in position [$position] defined in migration file [${file.metadata.filename}]",
-            e)
+            e,
+        )
       }
     }
 

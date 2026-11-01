@@ -52,12 +52,14 @@ internal class MigrationFileLoader(
               checkNotNull(javaClass.classLoader.getResource("$path/")) {
                     "Migration directory not found on classpath: $path"
                   }
-                  .toURI())
+                  .toURI()
+          )
         }
         directory.startsWith("file:") -> Paths.get(directory.removePrefix("file:"))
         else ->
             error(
-                "Unsupported migration directory scheme in '$directory'. Supported schemes: 'classpath:', 'file:'")
+                "Unsupported migration directory scheme in '$directory'. Supported schemes: 'classpath:', 'file:'"
+            )
       }
 
   companion object {
@@ -111,7 +113,8 @@ internal class MigrationFileLoader(
                       req.params?.let { put("params", it) }
                       put("path", req.path)
                     }
-                  })
+                  }
+          )
       val digest = MessageDigest.getInstance("MD5")
       digest.update(JSON_MAPPER_CANONICAL.writeValueAsBytes(canonical))
       return ByteBuffer.wrap(digest.digest()).int

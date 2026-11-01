@@ -14,7 +14,12 @@ class MigrationFileLoaderTest {
       body: String? = null,
   ) =
       MigrationFile.MigrationFileRequestDefinition(
-          method = method, path = path, contentType = contentType, params = params, body = body)
+          method = method,
+          path = path,
+          contentType = contentType,
+          params = params,
+          body = body,
+      )
 
   private fun contents(vararg requests: MigrationFile.MigrationFileRequestDefinition) =
       MigrationFile.MigrationFileContents(requests = requests.toList())
@@ -69,7 +74,8 @@ class MigrationFileLoaderTest {
   fun calculateChecksum_bodyChanged_differentChecksum() {
     assertThat(MigrationFileLoader.calculateChecksum(contents(req(body = """{"replicas":1}"""))))
         .isNotEqualTo(
-            MigrationFileLoader.calculateChecksum(contents(req(body = """{"replicas":2}"""))))
+            MigrationFileLoader.calculateChecksum(contents(req(body = """{"replicas":2}""")))
+        )
   }
 
   @Test

@@ -52,7 +52,8 @@ internal class MigrationTemplateResolver(private val properties: Map<String, Str
         val key = match.groupValues[1]
         properties[key]
             ?: throw IllegalStateException(
-                "unresolved template variable '#{$key}' — was validate() called?")
+                "unresolved template variable '#{$key}' — was validate() called?"
+            )
       }
 
   companion object {

@@ -9,7 +9,7 @@ Specs live in `.claude/superpowers/specs/` named `YYYY-MM-DD-<topic>-design.md`.
 **Esque** (**E**lasticsearch **S**tateful **Qu**ery **E**xecutor) is a migration management library for Elasticsearch, similar to Flyway but for ES clusters. It executes pre-defined queries in order, tracks which have been applied, validates integrity, and supports distributed locking for safe concurrent execution.
 
 - **License:** Apache 2.0
-- **Implementations:** JVM (Kotlin 2.4.0, Java 21) · Python 3.14 · TypeScript 5.x (Node 22+)
+- **Implementations:** JVM (Kotlin 2.4.21, Java 21) · Python 3.14 · TypeScript 5.x (Node 22+)
 - **Target:** Elasticsearch 9+ (ES 9.4.x REST API)
 - **JVM published to:** Maven Central as `org.loesak.esque:esque`
 - **Python published to:** PyPI as `esque-py`
@@ -36,7 +36,7 @@ esque/
 │   │   ├── settings.gradle.kts      # rootProject.name = "esque"
 │   │   ├── gradle/
 │   │   │   ├── libs.versions.toml   # Gradle version catalog
-│   │   │   └── wrapper/             # Gradle wrapper (9.5.1)
+│   │   │   └── wrapper/             # Gradle wrapper (9.8.2)
 │   │   ├── gradlew / gradlew.bat    # Gradle wrapper scripts
 │   │   ├── gradle.properties        # Gradle daemon/cache/parallel settings
 │   │   ├── detekt.yml               # Detekt rule configuration
@@ -358,7 +358,7 @@ Uses ES `op_type=create` for cross-process atomicity. The JVM also wraps this wi
 - **Kotlin data classes**: All immutable domain models
 - **Jackson**: JSON and YAML serialization via `jackson-bom`; `@JsonTypeInfo` / `@JsonTypeName` for type-wrapped ES documents; `jackson-module-kotlin` for data class deserialization
 - **kotlin-logging**: `val log = KotlinLogging.logger {}` at top level
-- **Clikt 4.4.0**: CLI parsing (`--es-url`, `--migrations-dir`, `--migration-key`, `--migration-user`, `--lock-timeout-minutes`, `--property` repeatable)
+- **Clikt 5.1.0**: CLI parsing (`--es-url`, `--migrations-dir`, `--migration-key`, `--migration-user`, `--lock-timeout-minutes`, `--property` repeatable)
 
 ## Python Code Conventions
 
