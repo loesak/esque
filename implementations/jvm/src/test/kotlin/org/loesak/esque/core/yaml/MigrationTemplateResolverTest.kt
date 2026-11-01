@@ -16,7 +16,12 @@ class MigrationTemplateResolverTest {
       params: Map<String, String>? = null,
   ) =
       MigrationFile.MigrationFileRequestDefinition(
-          method = method, path = path, body = body, contentType = contentType, params = params)
+          method = method,
+          path = path,
+          body = body,
+          contentType = contentType,
+          params = params,
+      )
 
   private fun makeFile(
       vararg definitions: MigrationFile.MigrationFileRequestDefinition
@@ -43,7 +48,8 @@ class MigrationTemplateResolverTest {
   fun validate_allPlaceholdersResolved_succeeds() {
     val resolver = MigrationTemplateResolver(mapOf("suffix" to "v1", "replicas" to "3"))
     resolver.validate(
-        listOf(makeFile(makeDefinition("/test-#{suffix}", """{"replicas":#{replicas}}"""))))
+        listOf(makeFile(makeDefinition("/test-#{suffix}", """{"replicas":#{replicas}}""")))
+    )
   }
 
   @Test
@@ -62,7 +68,9 @@ class MigrationTemplateResolverTest {
           MigrationTemplateResolver(emptyMap())
               .validate(
                   listOf(
-                      makeFile(makeDefinition("/#{prefix}-index", """{"replicas":#{replicas}}"""))))
+                      makeFile(makeDefinition("/#{prefix}-index", """{"replicas":#{replicas}}"""))
+                  )
+              )
         }
         .isInstanceOf(IllegalStateException::class.java)
         .hasMessageContaining("prefix")
@@ -74,7 +82,8 @@ class MigrationTemplateResolverTest {
     val resolver = MigrationTemplateResolver(mapOf("a" to "1"))
     assertThatThrownBy {
           resolver.validate(
-              listOf(makeFile(makeDefinition("/#{a}")), makeFile(makeDefinition("/#{b}"))))
+              listOf(makeFile(makeDefinition("/#{a}")), makeFile(makeDefinition("/#{b}")))
+          )
         }
         .isInstanceOf(IllegalStateException::class.java)
         .hasMessageContaining("b")
@@ -101,7 +110,8 @@ class MigrationTemplateResolverTest {
     assertThatThrownBy {
           MigrationTemplateResolver(emptyMap())
               .validate(
-                  listOf(makeFile(makeDefinition(contentType = "application/#{missingType}"))))
+                  listOf(makeFile(makeDefinition(contentType = "application/#{missingType}")))
+              )
         }
         .isInstanceOf(IllegalStateException::class.java)
         .hasMessageContaining("missingType")
@@ -112,10 +122,9 @@ class MigrationTemplateResolverTest {
     // params keys are structural and never substituted — placeholders in keys pass through as
     // literals
     assertThatCode {
-          MigrationTemplateResolver(emptyMap())
-              .validate(
-                  listOf(makeFile(makeDefinition(params = mapOf("#{ignoredKey}" to "value")))))
-        }
+      MigrationTemplateResolver(emptyMap())
+          .validate(listOf(makeFile(makeDefinition(params = mapOf("#{ignoredKey}" to "value")))))
+    }
         .doesNotThrowAnyException()
   }
 
@@ -208,7 +217,8 @@ class MigrationTemplateResolverTest {
                 listOf(
                     makeDefinition("/#{prefix}-index", body = """{"replicas":#{count}}"""),
                     makeDefinition("/#{prefix}-alias"),
-                ))
+                )
+        )
     val resolved =
         MigrationTemplateResolver(mapOf("prefix" to "prod", "count" to "3"))
             .resolveContents(contents)
