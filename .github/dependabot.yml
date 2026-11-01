@@ -1,0 +1,42 @@
+# Routine version updates, grouped into one weekly PR per ecosystem.
+# Security updates are enabled separately in repo settings and still open
+# their own PRs immediately, outside these groups.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /implementations/jvm
+    schedule:
+      interval: weekly
+    groups:
+      jvm:
+        applies-to: version-updates
+        patterns: ["*"]
+
+  - package-ecosystem: uv
+    directories:
+      - /implementations/python
+      - /tests
+    schedule:
+      interval: weekly
+    groups:
+      python:
+        applies-to: version-updates
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /implementations/typescript
+    schedule:
+      interval: weekly
+    groups:
+      typescript:
+        applies-to: version-updates
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        applies-to: version-updates
+        patterns: ["*"]
