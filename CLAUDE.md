@@ -23,6 +23,7 @@ esque/
 ├── .githooks/
 │   └── pre-commit                   # [1] JVM checks [2] Python checks [3] TypeScript checks [4] compat tests
 ├── .github/
+│   ├── dependabot.yml               # Weekly grouped version updates per ecosystem
 │   ├── version_jvm.sh               # Git-tag-based version for JVM (X.Y.Z or X.Y.Z-...-SNAPSHOT)
 │   ├── version_python.sh            # PEP 440 version for Python (X.Y.Z or X.Y.Z.devN)
 │   ├── version_typescript.sh        # SemVer version for TypeScript (X.Y.Z or X.Y.Z-dev.N)
@@ -250,6 +251,7 @@ A single **`ci.yml`** handles everything — checks, publishing, and compatibili
 
 - **Triggers**: push to `master` · PRs to `master` · published GitHub releases
 - **Publish guard**: publish steps are skipped on PRs from forks and from Dependabot (`CAN_PUBLISH` workflow env), since those runs get no Actions secrets. Lint/build/test and compatibility tests still run, so Dependabot PRs can be merged directly. Maintainer PRs from repo branches still publish. Never switch to `pull_request_target` to give forks secrets.
+- **Dependabot**: `.github/dependabot.yml` opens one grouped weekly version-update PR per ecosystem (gradle, uv for `implementations/python` + `tests`, npm, github-actions). Security updates (repo setting) open separate PRs immediately. Thanks to the publish guard, Dependabot PRs go green and can be merged directly.
 - **`jvm`**: ktfmtCheck + detekt + build + publish on every build. vanniktech plugin routes automatically — `*-SNAPSHOT` versions go to OSSRH snapshots, release versions go to Maven Central staging.
 - **`python`**: ruff + pyright + build + publish on every build. Version is computed by `.github/version_python.sh` (PEP 440: `X.Y.Z` on exact tag, `X.Y.Z.devN` otherwise) and patched into `pyproject.toml` before building. Non-release builds publish to TestPyPI (`TEST_PYPI_TOKEN`); release builds publish to PyPI (`PYPI_TOKEN`).
 - **`typescript`**: Biome + tsc + node:test + build + a compiled dist/cli.js smoke test, then publish on every build. Version from `.github/version_typescript.sh` (SemVer: `X.Y.Z` on exact tag, `X.Y.Z-dev.N` otherwise) patched into `package.json` before building. Non-release builds publish to npm under the `dev` dist-tag (`NPM_TOKEN` secret); release builds publish to `latest`.
