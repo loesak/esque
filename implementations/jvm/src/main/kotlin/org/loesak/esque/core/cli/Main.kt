@@ -1,6 +1,8 @@
 package org.loesak.esque.core.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
@@ -11,11 +13,9 @@ import org.elasticsearch.client.RestClient
 import org.loesak.esque.core.Esque
 import org.loesak.esque.core.EsqueConfiguration
 
-class EsqueCli :
-    CliktCommand(
-        name = "esque",
-        help = "Run Elasticsearch migrations",
-    ) {
+class EsqueCli : CliktCommand(name = "esque") {
+
+  override fun help(context: Context) = "Run Elasticsearch migrations"
 
   private val esUrl by
       option("--es-url", help = "Elasticsearch URL (e.g. http://localhost:9200)").required()
@@ -23,7 +23,8 @@ class EsqueCli :
   private val migrationsDir by
       option(
               "--migrations-dir",
-              help = "Absolute path to directory containing migration YAML files")
+              help = "Absolute path to directory containing migration YAML files",
+          )
           .required()
 
   private val migrationKey by
@@ -45,12 +46,11 @@ class EsqueCli :
           .multiple()
 
   override fun run() {
-    val props =
-        properties.associate { entry ->
-          val parts = entry.split("=", limit = 2)
-          check(parts.size == 2) { "Property must be in key=value format, got: $entry" }
-          parts[0] to parts[1]
-        }
+    val props = properties.associate { entry ->
+      val parts = entry.split("=", limit = 2)
+      check(parts.size == 2) { "Property must be in key=value format, got: $entry" }
+      parts[0] to parts[1]
+    }
 
     val host = HttpHost.create(esUrl)
 

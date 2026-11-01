@@ -64,7 +64,9 @@ internal class RestClientOperations(
           InputStreamEntity(
               checkNotNull(
                   javaClass.classLoader.getResourceAsStream(
-                      MIGRATION_DOCUMENT_INDEX_DEFINITION_FILE_PATH)),
+                      MIGRATION_DOCUMENT_INDEX_DEFINITION_FILE_PATH
+                  )
+              ),
               ContentType.APPLICATION_JSON,
           )
 
@@ -73,7 +75,9 @@ internal class RestClientOperations(
       } catch (e: ResponseException) {
         val content: Map<String, Any> =
             mapper.readValue(
-                e.response.entity.content, object : TypeReference<Map<String, Any>>() {})
+                e.response.entity.content,
+                object : TypeReference<Map<String, Any>>() {},
+            )
         @Suppress("UNCHECKED_CAST")
         val alreadyExists =
             (content["error"] as? Map<String, Any>)?.get("type") ==
@@ -91,7 +95,9 @@ internal class RestClientOperations(
       log.info { "Migration index with name [$MIGRATION_DOCUMENT_INDEX] created" }
     } catch (e: Exception) {
       throw IllegalStateException(
-          "Failed to create migration index with name [$MIGRATION_DOCUMENT_INDEX]", e)
+          "Failed to create migration index with name [$MIGRATION_DOCUMENT_INDEX]",
+          e,
+      )
     }
   }
 
@@ -106,7 +112,8 @@ internal class RestClientOperations(
       val request =
           Request(
               HTTP_METHOD_PUT,
-              "$MIGRATION_DOCUMENT_INDEX/_doc/$MIGRATION_LOCK_DOCUMENT_ID_PREFIX:$migrationKey")
+              "$MIGRATION_DOCUMENT_INDEX/_doc/$MIGRATION_LOCK_DOCUMENT_ID_PREFIX:$migrationKey",
+          )
       request.addParameter("op_type", "create")
       request.setJsonEntity(mapper.writeValueAsString(MigrationLock(Instant.now())))
 
@@ -115,7 +122,9 @@ internal class RestClientOperations(
       log.info { "Lock document for migration key [$migrationKey] created" }
     } catch (e: Exception) {
       throw IllegalStateException(
-          "Failed to create lock document for migration key [$migrationKey]", e)
+          "Failed to create lock document for migration key [$migrationKey]",
+          e,
+      )
     }
   }
 
@@ -125,7 +134,9 @@ internal class RestClientOperations(
       sendRequest(
           Request(
               HTTP_METHOD_DELETE,
-              "$MIGRATION_DOCUMENT_INDEX/_doc/$MIGRATION_LOCK_DOCUMENT_ID_PREFIX:$migrationKey"))
+              "$MIGRATION_DOCUMENT_INDEX/_doc/$MIGRATION_LOCK_DOCUMENT_ID_PREFIX:$migrationKey",
+          )
+      )
       log.info { "Lock document for key [$migrationKey] deleted" }
     } catch (e: Exception) {
       throw IllegalStateException("Failed to delete lock document for key [$migrationKey]", e)
@@ -153,13 +164,15 @@ internal class RestClientOperations(
       records
     } catch (e: Exception) {
       throw IllegalStateException(
-          "Failed to get migration records for migration key [$migrationKey]", e)
+          "Failed to get migration records for migration key [$migrationKey]",
+          e,
+      )
     }
   }
 
   fun getMigrationRecordForMigrationFile(
       file: MigrationFile,
-      migrationKey: String
+      migrationKey: String,
   ): MigrationRecord? {
     return try {
       log.info {
@@ -168,7 +181,8 @@ internal class RestClientOperations(
 
       val request = Request(HTTP_METHOD_GET, "$MIGRATION_DOCUMENT_INDEX/_search")
       request.setJsonEntity(
-          FIND_ONE_BY_KEY_AND_FILENAME_QUERY.format(this.migrationKey, file.metadata.filename))
+          FIND_ONE_BY_KEY_AND_FILENAME_QUERY.format(this.migrationKey, file.metadata.filename)
+      )
 
       val response = sendRequest(request)
       val content: Map<String, Any> =
@@ -183,7 +197,8 @@ internal class RestClientOperations(
       when {
         records.size > 1 ->
             throw IllegalStateException(
-                "found more than one migration record for migration file named [${file.metadata.filename}] and migration key [$migrationKey]")
+                "found more than one migration record for migration file named [${file.metadata.filename}] and migration key [$migrationKey]"
+            )
         records.size == 1 -> {
           log.info {
             "Found existing migration record for migration file named [${file.metadata.filename}] and migration key [$migrationKey]"
@@ -241,7 +256,9 @@ internal class RestClientOperations(
       log.info { "Migration record for migration definition file [${record.filename}] created" }
     } catch (e: Exception) {
       throw IllegalStateException(
-          "Failed to create migration record for migration definition file [${record.filename}]", e)
+          "Failed to create migration record for migration definition file [${record.filename}]",
+          e,
+      )
     }
   }
 

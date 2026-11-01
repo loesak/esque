@@ -78,7 +78,16 @@ class RestClientOperationsIT : AbstractElasticsearchIT() {
     val now = Instant.now()
     val record =
         MigrationRecord(
-            MIGRATION_KEY, 0, "V1.0.0__Test.yml", "1.0.0", "Test", 12345, "test-user", now, 100L)
+            MIGRATION_KEY,
+            0,
+            "V1.0.0__Test.yml",
+            "1.0.0",
+            "Test",
+            12345,
+            "test-user",
+            now,
+            100L,
+        )
     operations.createMigrationRecord(record)
 
     val records = operations.getMigrationRecords()
@@ -102,13 +111,43 @@ class RestClientOperationsIT : AbstractElasticsearchIT() {
     val now = Instant.now()
     operations.createMigrationRecord(
         MigrationRecord(
-            MIGRATION_KEY, 0, "V1.0.0__First.yml", "1.0.0", "First", 111, "user", now, 10L))
+            MIGRATION_KEY,
+            0,
+            "V1.0.0__First.yml",
+            "1.0.0",
+            "First",
+            111,
+            "user",
+            now,
+            10L,
+        )
+    )
     operations.createMigrationRecord(
         MigrationRecord(
-            MIGRATION_KEY, 1, "V1.1.0__Second.yml", "1.1.0", "Second", 222, "user", now, 20L))
+            MIGRATION_KEY,
+            1,
+            "V1.1.0__Second.yml",
+            "1.1.0",
+            "Second",
+            222,
+            "user",
+            now,
+            20L,
+        )
+    )
     operations.createMigrationRecord(
         MigrationRecord(
-            MIGRATION_KEY, 2, "V2.0.0__Third.yml", "2.0.0", "Third", 333, "user", now, 30L))
+            MIGRATION_KEY,
+            2,
+            "V2.0.0__Third.yml",
+            "2.0.0",
+            "Third",
+            333,
+            "user",
+            now,
+            30L,
+        )
+    )
 
     val records = operations.getMigrationRecords()
     assertThat(records).hasSize(3)
@@ -123,7 +162,8 @@ class RestClientOperationsIT : AbstractElasticsearchIT() {
     val file =
         MigrationFile(
             MigrationFile.MigrationFileMetadata("V1.0.0__Test.yml", "1.0.0", "Test", 12345),
-            MigrationFile.MigrationFileContents(emptyList()))
+            MigrationFile.MigrationFileContents(emptyList()),
+        )
     assertThat(operations.getMigrationRecordForMigrationFile(file, MIGRATION_KEY)).isNull()
   }
 
@@ -134,12 +174,23 @@ class RestClientOperationsIT : AbstractElasticsearchIT() {
     val now = Instant.now()
     operations.createMigrationRecord(
         MigrationRecord(
-            MIGRATION_KEY, 0, "V1.0.0__Test.yml", "1.0.0", "Test", 12345, "user", now, 50L))
+            MIGRATION_KEY,
+            0,
+            "V1.0.0__Test.yml",
+            "1.0.0",
+            "Test",
+            12345,
+            "user",
+            now,
+            50L,
+        )
+    )
 
     val file =
         MigrationFile(
             MigrationFile.MigrationFileMetadata("V1.0.0__Test.yml", "1.0.0", "Test", 12345),
-            MigrationFile.MigrationFileContents(emptyList()))
+            MigrationFile.MigrationFileContents(emptyList()),
+        )
 
     val found = operations.getMigrationRecordForMigrationFile(file, MIGRATION_KEY)
     assertThat(found).isNotNull()
@@ -151,7 +202,10 @@ class RestClientOperationsIT : AbstractElasticsearchIT() {
   fun executeMigrationDefinition_createsIndexInElasticsearch() {
     val definition =
         MigrationFile.MigrationFileRequestDefinition(
-            "PUT", "/test-exec-index", "application/json; charset=utf-8")
+            "PUT",
+            "/test-exec-index",
+            "application/json; charset=utf-8",
+        )
     operations.executeMigrationDefinition(definition)
     val response = client.performRequest(Request("HEAD", "/test-exec-index"))
     assertThat(response.statusLine.statusCode).isEqualTo(200)
@@ -161,7 +215,11 @@ class RestClientOperationsIT : AbstractElasticsearchIT() {
   fun executeMigrationDefinition_withBodyAndParams() {
     operations.executeMigrationDefinition(
         MigrationFile.MigrationFileRequestDefinition(
-            "PUT", "/test-param-index", "application/json; charset=utf-8"))
+            "PUT",
+            "/test-param-index",
+            "application/json; charset=utf-8",
+        )
+    )
 
     val definition =
         MigrationFile.MigrationFileRequestDefinition(
@@ -176,7 +234,8 @@ class RestClientOperationsIT : AbstractElasticsearchIT() {
                 ]
             }
             """
-                .trimIndent())
+                .trimIndent(),
+        )
 
     operations.executeMigrationDefinition(definition)
 
@@ -188,7 +247,16 @@ class RestClientOperationsIT : AbstractElasticsearchIT() {
   fun createMigrationRecord_throwsWhenKeyMismatch() {
     val record =
         MigrationRecord(
-            "wrong-key", 0, "V1.0.0__Test.yml", "1.0.0", "Test", 12345, "user", Instant.now(), 100L)
+            "wrong-key",
+            0,
+            "V1.0.0__Test.yml",
+            "1.0.0",
+            "Test",
+            12345,
+            "user",
+            Instant.now(),
+            100L,
+        )
     assertThatThrownBy { operations.createMigrationRecord(record) }
         .isInstanceOf(IllegalStateException::class.java)
         .hasMessageContaining("migration record migration key must match operational migration key")
