@@ -9,7 +9,7 @@ Specs live in `.claude/superpowers/specs/` named `YYYY-MM-DD-<topic>-design.md`.
 **Esque** (**E**lasticsearch **S**tateful **Qu**ery **E**xecutor) is a migration management library for Elasticsearch, similar to Flyway but for ES clusters. It executes pre-defined queries in order, tracks which have been applied, validates integrity, and supports distributed locking for safe concurrent execution.
 
 - **License:** Apache 2.0
-- **Implementations:** JVM (Kotlin 2.4.0, Java 21) · Python 3.14 · TypeScript 5.x (Node 22+)
+- **Implementations:** JVM (Kotlin 2.4.0, Java 21) · Python 3.14 · TypeScript 7.x (Node 22.12+)
 - **Target:** Elasticsearch 9+ (ES 9.4.x REST API)
 - **JVM published to:** Maven Central as `org.loesak.esque:esque`
 - **Python published to:** PyPI as `esque-py`
