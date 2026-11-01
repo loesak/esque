@@ -27,6 +27,11 @@ updates:
     directory: /implementations/typescript
     schedule:
       interval: weekly
+    ignore:
+      # Keep Node type definitions on the oldest supported Node major
+      # (engines: >=22.12.0) so typecheck rejects newer-only APIs.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       typescript:
         applies-to: version-updates
