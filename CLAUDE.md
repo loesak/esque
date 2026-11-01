@@ -249,6 +249,7 @@ Version is derived from git tags via `version.sh`:
 A single **`ci.yml`** handles everything — checks, publishing, and compatibility tests:
 
 - **Triggers**: push to `master` · PRs to `master` · published GitHub releases
+- **Publish guard**: publish steps are skipped on PRs from forks and from Dependabot (`CAN_PUBLISH` workflow env), since those runs get no Actions secrets. Lint/build/test and compatibility tests still run, so Dependabot PRs can be merged directly. Maintainer PRs from repo branches still publish. Never switch to `pull_request_target` to give forks secrets.
 - **`jvm`**: ktfmtCheck + detekt + build + publish on every build. vanniktech plugin routes automatically — `*-SNAPSHOT` versions go to OSSRH snapshots, release versions go to Maven Central staging.
 - **`python`**: ruff + pyright + build + publish on every build. Version is computed by `.github/version_python.sh` (PEP 440: `X.Y.Z` on exact tag, `X.Y.Z.devN` otherwise) and patched into `pyproject.toml` before building. Non-release builds publish to TestPyPI (`TEST_PYPI_TOKEN`); release builds publish to PyPI (`PYPI_TOKEN`).
 - **`typescript`**: Biome + tsc + node:test + build + a compiled dist/cli.js smoke test, then publish on every build. Version from `.github/version_typescript.sh` (SemVer: `X.Y.Z` on exact tag, `X.Y.Z-dev.N` otherwise) patched into `package.json` before building. Non-release builds publish to npm under the `dev` dist-tag (`NPM_TOKEN` secret); release builds publish to `latest`.
